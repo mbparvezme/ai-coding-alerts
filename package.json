@@ -1,0 +1,25 @@
+{
+  "name": "ai-coding-alerts",
+  "displayName": "AI Coding Alerts",
+  "description": "Get a sound, an OS notification, and window focus when Claude Code or another AI agent is waiting for your confirmation.",
+  "version": "0.1.0",
+  "publisher": "mbparvezme",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Notebooks", "Other"],
+  "keywords": ["claude", "claude code", "ai agent", "notification", "alert"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "scripts": {
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "vscode:prepublish": "node esbuild.js --production",
+    "test": "node --import tsx --test \"test/**/*.test.ts\""
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.90.0",
+    "esbuild": "^0.21.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0"
+  }
+}
