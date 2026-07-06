@@ -5,6 +5,8 @@
   "version": "0.1.0",
   "publisher": "mbparvezme",
   "engines": { "vscode": "^1.90.0" },
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/mbparvezme/ai-coding-alerts.git" },
   "categories": ["Notebooks", "Other"],
   "keywords": ["claude", "claude code", "ai agent", "notification", "alert"],
   "activationEvents": ["onStartupFinished"],
