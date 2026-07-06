@@ -9,6 +9,58 @@
   "keywords": ["claude", "claude code", "ai agent", "notification", "alert"],
   "activationEvents": ["onStartupFinished"],
   "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "AI Coding Alerts",
+      "properties": {
+        "aiCodingAlerts.port": {
+          "type": "number",
+          "default": 51789,
+          "description": "Local port the extension listens on for agent alerts."
+        },
+        "aiCodingAlerts.sound": {
+          "type": "string",
+          "enum": ["chime", "ping", "knock", "alarm", "custom"],
+          "default": "chime",
+          "description": "Sound played on an alert. Choose 'custom' to use your own file."
+        },
+        "aiCodingAlerts.customSoundPath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to a custom sound file, used when 'sound' is 'custom'."
+        },
+        "aiCodingAlerts.enableOsNotification": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show an OS-level notification on an alert."
+        },
+        "aiCodingAlerts.enableWindowFocus": {
+          "type": "boolean",
+          "default": true,
+          "description": "Bring the VS Code window to the foreground on an alert."
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "aiCodingAlerts",
+          "title": "AI Coding Alerts",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "aiCodingAlerts": [
+        { "id": "aiCodingAlerts.history", "name": "Alert History", "type": "webview" },
+        { "id": "aiCodingAlerts.dashboard", "name": "Dashboard", "type": "webview" }
+      ]
+    },
+    "commands": [
+      { "command": "aiCodingAlerts.clearHistory", "title": "AI Coding Alerts: Clear History" },
+      { "command": "aiCodingAlerts.testAlert", "title": "AI Coding Alerts: Send Test Alert" }
+    ]
+  },
   "scripts": {
     "build": "node esbuild.js",
     "watch": "node esbuild.js --watch",
