@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createAlert } from "../../src/model/Alert";
+import { newId } from "../../src/util/id";
 
 test("createAlert defaults status to pending and generates an id", () => {
   const a = createAlert({ agent: "claude-code", type: "permission", message: "hi" });
@@ -15,7 +16,6 @@ test("createAlert honours an explicit receivedAt", () => {
   assert.equal(a.receivedAt, 123);
 });
 
-test("newId values are unique", async () => {
-  const { newId } = await import("../../src/util/id");
+test("newId values are unique", () => {
   assert.notEqual(newId(), newId());
 });
