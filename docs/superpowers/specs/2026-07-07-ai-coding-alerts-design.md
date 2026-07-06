@@ -42,15 +42,16 @@ The seam is the normalized `Alert`. Detectors produce it; reactors consume it. N
 | `ClaudeCodeDetector` | Parse Claude Code notification payloads into `Alert` | — |
 | `DetectorRegistry` | Route payload to first matching detector | detectors |
 | `AlertBus` | Fan out a normalized `Alert` to reactors | reactors |
-| `SoundPlayer` | Play built-in/custom sound via hidden webview | SoundEngine, config |
+| `SoundPlayer` | Play built-in/custom sound via per-OS audio player | audio command builder, child_process, config |
 | `OsNotifier` | terminal-notifier / notify-send / BurntToast per OS | child_process, config |
-| `WindowFocuser` | Bring the VS Code window to front | vscode API, config |
-| `HistoryStore` | Persist alerts, emit change events | vscode Memento |
-| `StatsService` | Derive dashboard metrics from history | HistoryStore |
+| `WindowFocuser` | Bring the VS Code window to front | child_process, config |
+| `HistoryStore` | Persist alerts, emit change events | injected key-value store |
+| `StatsService` | Derive dashboard metrics from history | — |
 | `HistoryViewProvider` | Sidebar webview: alert log + replay + mark status | HistoryStore |
 | `DashboardViewProvider` | Sidebar webview: aggregate stats | StatsService |
-| `SoundEngine` | Hidden webview hosting `<audio>` playback | — |
 | `ConfigService` | Typed access to settings + change events | vscode workspace config |
+
+Playback, OS notification, and window focus all resolve to a per-OS `{ command, args }` built by a pure builder function and executed with a detached `child_process.spawn`. This keeps the platform branching in small, unit-testable builders and the side effect in a thin executor.
 
 ## Data model
 
@@ -78,9 +79,9 @@ Derived metrics (`StatsService`): total alerts today, approved/denied counts, av
 
 ## Sounds
 
-- 3–4 short bundled sounds in `media/sounds/`.
+- 3–4 short bundled WAV sounds in `media/sounds/`.
 - Settings dropdown is an enum of built-in names plus a `custom` option. When `custom` is selected, `aiCodingAlerts.customSoundPath` supplies the file.
-- `SoundPlayer` resolves the sound to a webview URI and posts it to the hidden `SoundEngine` webview, which plays it via `<audio>`. History replay reuses the same path.
+- `SoundPlayer` resolves the selected sound to an absolute path, builds a per-OS play command (macOS `afplay`; Linux `ffplay`/`paplay`/`aplay`; Windows PowerShell `MediaPlayer`), and runs it detached. History replay reuses the same resolution + command path.
 
 ## Settings (prefix `aiCodingAlerts.`)
 
