@@ -29,7 +29,7 @@ Add a `Notification` hook to your Claude Code settings (`~/.claude/settings.json
         "hooks": [
           {
             "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:51789/alert -H 'content-type: application/json' -d @-"
+            "command": "curl -s -X POST http://127.0.0.1:51789/alert -H \"content-type: application/json\" -d @-"
           }
         ]
       }
@@ -38,7 +38,7 @@ Add a `Notification` hook to your Claude Code settings (`~/.claude/settings.json
 }
 ```
 
-Claude Code pipes the hook JSON on stdin; `-d @-` forwards it to the extension. If you change `aiCodingAlerts.port`, update the URL to match.
+Claude Code pipes the hook JSON on stdin; `-d @-` forwards it to the extension. The escaped double quotes keep the command portable across Windows (cmd) and Unix shells. If you change `aiCodingAlerts.port`, update the URL to match. Hooks are captured when a session starts, so restart Claude Code after adding this.
 
 ### OS notification prerequisites
 
