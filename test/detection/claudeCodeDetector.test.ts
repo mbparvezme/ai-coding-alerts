@@ -9,7 +9,7 @@ test("canHandle accepts a Notification hook payload", () => {
 });
 
 test("canHandle rejects unrelated payloads", () => {
-  assert.equal(detector.canHandle({ hook_event_name: "Stop" }), false);
+  assert.equal(detector.canHandle({ hook_event_name: "PreToolUse" }), false);
   assert.equal(detector.canHandle(null), false);
   assert.equal(detector.canHandle("nope"), false);
 });
@@ -25,4 +25,20 @@ test("parse maps message and sets agent/type", () => {
 test("parse falls back to a default message when absent", () => {
   const alert = detector.parse({ hook_event_name: "Notification" });
   assert.equal(alert.message, "Claude Code needs your attention");
+});
+
+test("canHandle accepts a Stop hook payload", () => {
+  assert.equal(detector.canHandle({ hook_event_name: "Stop" }), true);
+});
+
+test("parse maps Stop to a completion alert with truncated message", () => {
+  const alert = detector.parse({ hook_event_name: "Stop", last_assistant_message: "x".repeat(200) });
+  assert.equal(alert.type, "completion");
+  assert.equal(alert.message.length, 140);
+  assert.ok(alert.message.endsWith("…"));
+});
+
+test("parse maps Stop without message to a default", () => {
+  const alert = detector.parse({ hook_event_name: "Stop" });
+  assert.equal(alert.message, "Claude Code finished responding");
 });

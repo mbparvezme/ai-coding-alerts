@@ -17,9 +17,9 @@ Get a sound, an OS-level notification, and window focus the moment Claude Code (
 2. Open the **AI Coding Alerts** view in the activity bar.
 3. (Optional) Adjust settings — see below.
 
-### Claude Code hook
+### Claude Code hooks
 
-Add a `Notification` hook to your Claude Code settings (`~/.claude/settings.json`) so Claude tells the extension when it is waiting:
+Add these hooks to your Claude Code settings (`~/.claude/settings.json`) so Claude tells the extension when it needs you:
 
 ```json
 {
@@ -33,12 +33,25 @@ Add a `Notification` hook to your Claude Code settings (`~/.claude/settings.json
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -X POST http://127.0.0.1:51789/alert -H \"content-type: application/json\" -d @-"
+          }
+        ]
+      }
     ]
   }
 }
 ```
 
-Claude Code pipes the hook JSON on stdin; `-d @-` forwards it to the extension. The escaped double quotes keep the command portable across Windows (cmd) and Unix shells. If you change `aiCodingAlerts.port`, update the URL to match. Hooks are captured when a session starts, so restart Claude Code after adding this.
+Claude Code pipes the hook JSON on stdin; `-d @-` forwards it to the extension. The escaped double quotes keep the command portable across Windows (cmd) and Unix shells. If you change `aiCodingAlerts.port`, update the URL to match.
+
+- `Notification` alerts when Claude is waiting for a permission confirmation or idle. **Terminal CLI only** — the Claude Code desktop app currently does not emit notification events.
+- `Stop` alerts when Claude finishes responding and is waiting for you. Works everywhere, including the desktop app. Remove it if you find per-turn alerts too chatty.
 
 ### OS notification prerequisites
 
