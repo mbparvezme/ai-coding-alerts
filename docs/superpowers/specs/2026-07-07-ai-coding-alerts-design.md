@@ -51,7 +51,7 @@ The seam is the normalized `Alert`. Detectors produce it; reactors consume it. N
 | `DashboardViewProvider` | Sidebar webview: aggregate stats | StatsService |
 | `ConfigService` | Typed access to settings + change events | vscode workspace config |
 
-Playback, OS notification, and window focus all resolve to a per-OS `{ command, args }` built by a pure builder function and executed with a detached `child_process.spawn`. This keeps the platform branching in small, unit-testable builders and the side effect in a thin executor.
+Playback, OS notification, and window focus all resolve to a per-OS `{ command, args }` built by a pure builder function and executed with a non-blocking, hidden-window `child_process.spawn` (never detached: a detached console process on Windows gets no console and PowerShell dies on startup). This keeps the platform branching in small, unit-testable builders and the side effect in a thin executor.
 
 ## Data model
 
