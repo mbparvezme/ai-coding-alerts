@@ -22,7 +22,7 @@
         },
         "aiCodingAlerts.sound": {
           "type": "string",
-          "enum": ["chime", "ping", "knock", "alarm", "custom"],
+          "enum": ["chime", "ping", "knock", "alarm", "drop", "frog", "swip", "wire", "custom"],
           "default": "chime",
           "description": "Sound played on an alert. Choose 'custom' to use your own file."
         },

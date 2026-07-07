@@ -15,9 +15,23 @@ test("linux uses ffplay with quiet auto-exit flags", () => {
   assert.ok(c.args.includes("/a/b.wav"));
 });
 
-test("windows uses powershell MediaPlayer with the file path embedded", () => {
+function decodeScript(c: { args: string[] }): string {
+  return Buffer.from(c.args[c.args.indexOf("-EncodedCommand") + 1], "base64").toString("utf16le");
+}
+
+test("windows plays wav via powershell SoundPlayer, quote-safe encoded", () => {
   const c = buildSoundCommand("win32", "C:\\a\\b.wav");
   assert.equal(c.command, "powershell");
-  assert.ok(c.args.join(" ").includes("C:\\a\\b.wav"));
-  assert.ok(c.args.join(" ").includes("MediaPlayer"));
+  assert.ok(c.args.includes("-EncodedCommand"));
+  const script = decodeScript(c);
+  assert.ok(script.includes("C:\\a\\b.wav"));
+  assert.ok(script.includes("SoundPlayer"));
+});
+
+test("windows plays non-wav via winmm MCI, quote-safe encoded", () => {
+  const c = buildSoundCommand("win32", "C:\\a\\b.mp3");
+  assert.equal(c.command, "powershell");
+  const script = decodeScript(c);
+  assert.ok(script.includes("C:\\a\\b.mp3"));
+  assert.ok(script.includes("mciSendString"));
 });

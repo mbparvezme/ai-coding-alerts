@@ -1,4 +1,13 @@
-const BUILT_IN = new Set(["chime", "ping", "knock", "alarm"]);
+const BUILT_IN = new Map([
+  ["chime", "chime.wav"],
+  ["ping", "ping.wav"],
+  ["knock", "knock.wav"],
+  ["alarm", "alarm.wav"],
+  ["drop", "drop.mp3"],
+  ["frog", "frog.mp3"],
+  ["swip", "swip.mp3"],
+  ["wire", "wire.mp3"]
+]);
 
 export function resolveSoundPath(
   settings: { sound: string; customSoundPath: string },
@@ -7,8 +16,6 @@ export function resolveSoundPath(
   if (settings.sound === "custom") {
     return settings.customSoundPath.trim() ? settings.customSoundPath : null;
   }
-  if (BUILT_IN.has(settings.sound)) {
-    return `${mediaRoot}/sounds/${settings.sound}.wav`;
-  }
-  return null;
+  const file = BUILT_IN.get(settings.sound);
+  return file ? `${mediaRoot}/sounds/${file}` : null;
 }
