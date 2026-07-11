@@ -6,7 +6,7 @@ import { buildSoundCommand } from "../platform/soundCommand";
 export type CommandRunner = (command: Command) => void;
 
 export interface SoundConfig {
-  resolvePath(): string | null;
+  resolvePath(alertType: string): string | null;
 }
 
 export class SoundPlayer implements Reactor {
@@ -16,12 +16,12 @@ export class SoundPlayer implements Reactor {
     private readonly run: CommandRunner
   ) {}
 
-  react(_alert: Alert): void {
-    this.play();
+  react(alert: Alert): void {
+    this.play(alert.type);
   }
 
-  play(): void {
-    const path = this.config.resolvePath();
+  play(alertType: string): void {
+    const path = this.config.resolvePath(alertType);
     if (!path) {
       return;
     }

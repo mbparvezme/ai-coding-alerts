@@ -18,7 +18,7 @@ function render(alerts) {
       <div>
         <button data-act="approve" data-id="${a.id}">Approve</button>
         <button data-act="deny" data-id="${a.id}">Deny</button>
-        <button data-act="replay">Replay</button>
+        <button data-act="replay" data-id="${a.id}">Replay</button>
       </div>
     </div>`).join("");
   const msgs = root.querySelectorAll(".msg");
@@ -29,7 +29,6 @@ root.addEventListener("click", (e) => {
   const btn = e.target.closest("button");
   if (!btn) return;
   const act = btn.getAttribute("data-act");
-  if (act === "replay") { vscode.postMessage({ type: "replay" }); return; }
   vscode.postMessage({ type: act, id: btn.getAttribute("data-id") });
 });
 

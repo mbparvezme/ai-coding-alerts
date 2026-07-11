@@ -10,7 +10,7 @@ export class HistoryViewProvider implements vscode.WebviewViewProvider {
   constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly history: HistoryStore,
-    private readonly onReplay: () => void
+    private readonly onReplay: (alertType: string) => void
   ) {}
 
   resolveWebviewView(view: vscode.WebviewView): void {
@@ -33,7 +33,8 @@ export class HistoryViewProvider implements vscode.WebviewViewProvider {
     } else if (msg.type === "deny" && msg.id) {
       this.history.setStatus(msg.id, "denied");
     } else if (msg.type === "replay") {
-      this.onReplay();
+      const alert = this.history.list().find((a) => a.id === msg.id);
+      this.onReplay(alert?.type ?? "permission");
     }
   }
 

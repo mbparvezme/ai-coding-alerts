@@ -1,11 +1,10 @@
 import * as vscode from "vscode";
+import { SoundChoices } from "./soundResolver";
 
 const SECTION = "aiCodingAlerts";
 
-export interface AlertSettings {
+export interface AlertSettings extends SoundChoices {
   port: number;
-  sound: string;
-  customSoundPath: string;
   enableOsNotification: boolean;
   enableWindowFocus: boolean;
 }
@@ -15,8 +14,16 @@ export class ConfigService {
     const config = vscode.workspace.getConfiguration(SECTION);
     return {
       port: config.get<number>("port", 51789),
-      sound: config.get<string>("sound", "chime"),
-      customSoundPath: config.get<string>("customSoundPath", ""),
+      popup: {
+        sound: config.get<string>("popupSound", "alarm"),
+        customSoundPath: config.get<string>("popupCustomSoundPath", ""),
+        enabled: config.get<boolean>("enablePopupSound", true)
+      },
+      finished: {
+        sound: config.get<string>("finishedSound", "chime"),
+        customSoundPath: config.get<string>("finishedCustomSoundPath", ""),
+        enabled: config.get<boolean>("enableFinishedSound", true)
+      },
       enableOsNotification: config.get<boolean>("enableOsNotification", true),
       enableWindowFocus: config.get<boolean>("enableWindowFocus", true)
     };

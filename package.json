@@ -2,7 +2,7 @@
   "name": "ai-coding-alerts",
   "displayName": "AI Coding Alerts",
   "description": "Get a sound, an OS notification, and window focus when Claude Code or another AI agent is waiting for your confirmation.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "mbparvezme",
   "engines": { "vscode": "^1.90.0" },
   "license": "MIT",
@@ -15,31 +15,61 @@
     "configuration": {
       "title": "AI Coding Alerts",
       "properties": {
-        "aiCodingAlerts.port": {
-          "type": "number",
-          "default": 51789,
-          "description": "Local port the extension listens on for agent alerts."
+        "aiCodingAlerts.popupSound": {
+          "order": 1,
+          "type": "string",
+          "enum": ["chime", "ping", "knock", "alarm", "drop", "frog", "swip", "wire", "custom"],
+          "default": "alarm",
+          "description": "Sound for a popup that is waiting for your decision (permission request with options). Choose 'custom' to use your own file."
         },
-        "aiCodingAlerts.sound": {
+        "aiCodingAlerts.finishedSound": {
+          "order": 2,
           "type": "string",
           "enum": ["chime", "ping", "knock", "alarm", "drop", "frog", "swip", "wire", "custom"],
           "default": "chime",
-          "description": "Sound played on an alert. Choose 'custom' to use your own file."
+          "description": "Sound for a finished AI response. Choose 'custom' to use your own file."
         },
-        "aiCodingAlerts.customSoundPath": {
+        "aiCodingAlerts.popupCustomSoundPath": {
+          "order": 3,
           "type": "string",
           "default": "",
-          "description": "Absolute path to a custom sound file, used when 'sound' is 'custom'."
+          "description": "Absolute path to your own sound file for popup alerts, used when Popup Sound is 'custom'."
+        },
+        "aiCodingAlerts.finishedCustomSoundPath": {
+          "order": 4,
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to your own sound file for finished-response alerts, used when Finished Sound is 'custom'."
+        },
+        "aiCodingAlerts.enablePopupSound": {
+          "order": 5,
+          "type": "boolean",
+          "default": true,
+          "description": "Play a sound when a popup is waiting for your decision."
+        },
+        "aiCodingAlerts.enableFinishedSound": {
+          "order": 6,
+          "type": "boolean",
+          "default": true,
+          "description": "Play a sound when the AI finishes a response."
         },
         "aiCodingAlerts.enableOsNotification": {
+          "order": 7,
           "type": "boolean",
           "default": true,
           "description": "Show an OS-level notification on an alert."
         },
         "aiCodingAlerts.enableWindowFocus": {
+          "order": 8,
           "type": "boolean",
           "default": true,
           "description": "Bring the VS Code window to the foreground on an alert."
+        },
+        "aiCodingAlerts.port": {
+          "order": 9,
+          "type": "number",
+          "default": 51789,
+          "description": "Local port the extension listens on for agent alerts."
         }
       }
     },

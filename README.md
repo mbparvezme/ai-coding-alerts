@@ -73,13 +73,19 @@ Claude Code pipes the hook JSON on stdin; `-d @-` forwards it to the extension. 
 
 ## Settings
 
+Popup alerts (a permission popup with options is waiting for you) and finished alerts (the AI completed a response) each have their own sound, custom path, and toggle. Built-in sounds: `chime`, `ping`, `knock`, `alarm`, `drop`, `frog`, `swip`, `wire`.
+
 | Setting | Default | Description |
 |---|---|---|
-| `aiCodingAlerts.port` | `51789` | Local port the extension listens on. |
-| `aiCodingAlerts.sound` | `chime` | `chime`, `ping`, `knock`, `alarm`, or `custom`. |
-| `aiCodingAlerts.customSoundPath` | `""` | Absolute path used when `sound` is `custom`. |
+| `aiCodingAlerts.popupSound` | `alarm` | Sound for popup alerts; `custom` uses your own file. |
+| `aiCodingAlerts.finishedSound` | `chime` | Sound for finished-response alerts; `custom` uses your own file. |
+| `aiCodingAlerts.popupCustomSoundPath` | `""` | Absolute path used when `popupSound` is `custom`. |
+| `aiCodingAlerts.finishedCustomSoundPath` | `""` | Absolute path used when `finishedSound` is `custom`. |
+| `aiCodingAlerts.enablePopupSound` | `true` | Toggle the popup alert sound. |
+| `aiCodingAlerts.enableFinishedSound` | `true` | Toggle the finished-response sound. |
 | `aiCodingAlerts.enableOsNotification` | `true` | Toggle the OS notification. |
 | `aiCodingAlerts.enableWindowFocus` | `true` | Toggle window focus on alert. |
+| `aiCodingAlerts.port` | `51789` | Local port the extension listens on. |
 
 ## Test it
 

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { resolveSoundPath } from "../../src/config/soundResolver";
+import { resolveSoundPath, soundChoiceFor } from "../../src/config/soundResolver";
 
 test("built-in wav sound resolves under mediaRoot/sounds", () => {
   const p = resolveSoundPath({ sound: "ping", customSoundPath: "" }, "/ext");
@@ -23,4 +23,18 @@ test("custom without a path resolves to null", () => {
 
 test("unknown sound resolves to null", () => {
   assert.equal(resolveSoundPath({ sound: "weird", customSoundPath: "" }, "/ext"), null);
+});
+
+const choices = {
+  popup: { sound: "alarm", customSoundPath: "", enabled: true },
+  finished: { sound: "chime", customSoundPath: "", enabled: true }
+};
+
+test("completion alerts use the finished sound choice", () => {
+  assert.equal(soundChoiceFor("completion", choices), choices.finished);
+});
+
+test("permission and notification alerts use the popup sound choice", () => {
+  assert.equal(soundChoiceFor("permission", choices), choices.popup);
+  assert.equal(soundChoiceFor("notification", choices), choices.popup);
 });

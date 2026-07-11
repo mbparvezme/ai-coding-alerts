@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { ConfigService } from "./config/ConfigService";
-import { resolveSoundPath } from "./config/soundResolver";
+import { resolveSoundPath, soundChoiceFor } from "./config/soundResolver";
 import { HistoryStore } from "./history/HistoryStore";
 import { DetectorRegistry } from "./detection/DetectorRegistry";
 import { ClaudeCodeDetector } from "./detection/ClaudeCodeDetector";
@@ -23,7 +23,12 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const soundPlayer = new SoundPlayer(
     os,
-    { resolvePath: () => resolveSoundPath(config.read(), mediaRoot) },
+    {
+      resolvePath: (alertType) => {
+        const choice = soundChoiceFor(alertType, config.read());
+        return choice.enabled ? resolveSoundPath(choice, mediaRoot) : null;
+      }
+    },
     runCommand
   );
   const bus = new AlertBus(
@@ -59,7 +64,7 @@ export function activate(context: vscode.ExtensionContext): void {
   };
   void startServer();
 
-  const historyView = new HistoryViewProvider(context.extensionUri, history, () => soundPlayer.play());
+  const historyView = new HistoryViewProvider(context.extensionUri, history, (alertType) => soundPlayer.play(alertType));
   const dashboardView = new DashboardViewProvider(context.extensionUri, history);
 
   context.subscriptions.push(
