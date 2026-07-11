@@ -43,6 +43,17 @@ Add these hooks to your Claude Code settings (`~/.claude/settings.json`) so Clau
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -X POST http://127.0.0.1:51789/alert -H \"content-type: application/json\" -d @-"
+          }
+        ]
+      }
     ]
   }
 }
@@ -50,8 +61,9 @@ Add these hooks to your Claude Code settings (`~/.claude/settings.json`) so Clau
 
 Claude Code pipes the hook JSON on stdin; `-d @-` forwards it to the extension. The escaped double quotes keep the command portable across Windows (cmd) and Unix shells. If you change `aiCodingAlerts.port`, update the URL to match.
 
-- `Notification` alerts when Claude is waiting for a permission confirmation or idle. **Terminal CLI only** — the Claude Code desktop app currently does not emit notification events.
-- `Stop` alerts when Claude finishes responding and is waiting for you. Works everywhere, including the desktop app. Remove it if you find per-turn alerts too chatty.
+- `Notification` alerts when Claude is waiting for a permission confirmation or idle. **Terminal CLI only** — the Claude Code GUI (VS Code chat panel and desktop app) currently does not emit notification events.
+- `Stop` alerts when Claude finishes responding and is waiting for you. Works everywhere, including the GUI. Remove it if you find per-turn alerts too chatty.
+- `PreToolUse` alerts just before Claude runs a permission-gated tool — the moment a permission popup can appear in the GUI. It also fires for tools you have already allowlisted, so tune the `matcher` to the tools you actually gate.
 
 ### OS notification prerequisites
 

@@ -5,9 +5,11 @@ interface ClaudeHookPayload {
   hook_event_name: string;
   message?: string;
   last_assistant_message?: string;
+  tool_name?: string;
+  tool_input?: { command?: string; description?: string };
 }
 
-const HANDLED_EVENTS = new Set(["Notification", "Stop"]);
+const HANDLED_EVENTS = new Set(["Notification", "Stop", "PreToolUse"]);
 const MAX_MESSAGE_LENGTH = 140;
 
 function asClaudePayload(payload: unknown): ClaudeHookPayload | null {
@@ -33,6 +35,12 @@ export class ClaudeCodeDetector implements AgentDetector {
 
   parse(payload: unknown): Alert {
     const claude = asClaudePayload(payload);
+    if (claude?.hook_event_name === "PreToolUse") {
+      const detail = claude.tool_input?.description?.trim() || claude.tool_input?.command?.trim();
+      const tool = claude.tool_name ?? "a tool";
+      const message = truncate(detail ? `${tool}: ${detail}` : `Claude Code wants to use ${tool}`);
+      return createAlert({ agent: this.agent, type: "permission", message });
+    }
     if (claude?.hook_event_name === "Stop") {
       const message = claude.last_assistant_message?.trim()
         ? truncate(claude.last_assistant_message.trim())

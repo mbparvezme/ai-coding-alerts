@@ -9,7 +9,7 @@ test("canHandle accepts a Notification hook payload", () => {
 });
 
 test("canHandle rejects unrelated payloads", () => {
-  assert.equal(detector.canHandle({ hook_event_name: "PreToolUse" }), false);
+  assert.equal(detector.canHandle({ hook_event_name: "PostToolUse" }), false);
   assert.equal(detector.canHandle(null), false);
   assert.equal(detector.canHandle("nope"), false);
 });
@@ -41,4 +41,32 @@ test("parse maps Stop to a completion alert with truncated message", () => {
 test("parse maps Stop without message to a default", () => {
   const alert = detector.parse({ hook_event_name: "Stop" });
   assert.equal(alert.message, "Claude Code finished responding");
+});
+
+test("canHandle accepts a PreToolUse hook payload", () => {
+  assert.equal(detector.canHandle({ hook_event_name: "PreToolUse", tool_name: "Bash" }), true);
+});
+
+test("parse maps PreToolUse to a permission alert with tool detail", () => {
+  const alert = detector.parse({
+    hook_event_name: "PreToolUse",
+    tool_name: "Bash",
+    tool_input: { command: "npm install", description: "Install dependencies" }
+  });
+  assert.equal(alert.type, "permission");
+  assert.equal(alert.message, "Bash: Install dependencies");
+});
+
+test("parse falls back to the command when PreToolUse has no description", () => {
+  const alert = detector.parse({
+    hook_event_name: "PreToolUse",
+    tool_name: "Bash",
+    tool_input: { command: "npm install" }
+  });
+  assert.equal(alert.message, "Bash: npm install");
+});
+
+test("parse maps PreToolUse without input to a default message", () => {
+  const alert = detector.parse({ hook_event_name: "PreToolUse", tool_name: "Write" });
+  assert.equal(alert.message, "Claude Code wants to use Write");
 });
