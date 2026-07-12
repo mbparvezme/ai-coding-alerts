@@ -10,3 +10,4 @@ tsconfig.json
 .gitattributes
 .gitignore
 *.vsix
+DEVELOPMENT.md

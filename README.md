@@ -151,6 +151,8 @@ curl -X POST http://127.0.0.1:51789/alert \
 | `aiCodingAlerts.enableWindowFocus` | `true` |
 | `aiCodingAlerts.port` | `51789` |
 
-### Adding another AI agent
+### Contributing / modifying the code
 
-The extension is agent-agnostic: anything that can POST JSON to `http://127.0.0.1:51789/alert` can raise alerts. To add first-class support for a new agent, implement `AgentDetector` (`src/detection/AgentDetector.ts`) and register it in the `DetectorRegistry` list in `src/extension.ts` — the alert, history, and dashboard layers need no changes.
+See **[DEVELOPMENT.md](DEVELOPMENT.md)** for the architecture, module map, how to add settings/sounds/agents/alert types, the build-test-package-publish workflow, and the platform gotchas worth knowing before touching the Windows/hook code.
+
+In short: the extension is agent-agnostic — anything that can POST JSON to `http://127.0.0.1:51789/alert` can raise alerts. To add first-class support for a new agent, implement `AgentDetector` (`src/detection/AgentDetector.ts`) and register it in the `DetectorRegistry` list in `src/extension.ts`; the alert, history, and dashboard layers need no changes.
