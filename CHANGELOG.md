@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.5.0
+
+- Finished alerts wait for a quiet period (`finishedAlertDelay`, default 10s) so intermediate completions while Claude keeps working stay silent; only the final completion plays.
+
 ## 0.4.0
 
 - One-click Claude Code hook setup: first-run prompt plus an "Install Claude Code Hooks" command. Merges hooks into `~/.claude/settings.json` idempotently (backup written first), deploys scripts and sounds to the stable `~/.ai-coding-alerts/` folder, and re-syncs them when the port setting changes.

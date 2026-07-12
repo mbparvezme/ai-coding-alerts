@@ -5,6 +5,7 @@ import { HistoryStore } from "./history/HistoryStore";
 import { DetectorRegistry } from "./detection/DetectorRegistry";
 import { ClaudeCodeDetector } from "./detection/ClaudeCodeDetector";
 import { AlertBus } from "./alert/AlertBus";
+import { CompletionDebouncer } from "./alert/CompletionDebouncer";
 import { IngressServer } from "./ingress/IngressServer";
 import { SoundPlayer } from "./reactors/SoundPlayer";
 import { OsNotifier } from "./reactors/OsNotifier";
@@ -83,10 +84,15 @@ export function activate(context: vscode.ExtensionContext): void {
   }
   void offerHookSetup(installer, context.globalState);
 
+  const debouncer = new CompletionDebouncer(
+    () => config.read().finishedAlertDelay * 1000,
+    (alert) => void bus.emit(alert)
+  );
+
   const handlePayload = (payload: unknown): void => {
     const alert = registry.detect(payload);
     if (alert) {
-      void bus.emit(alert);
+      debouncer.push(alert);
     } else {
       output.appendLine(`Ignored unrecognized payload: ${JSON.stringify(payload)}`);
     }

@@ -2,7 +2,7 @@
   "name": "ai-coding-alerts",
   "displayName": "AI Coding Alerts",
   "description": "Get a sound, an OS notification, and window focus when Claude Code or another AI agent is waiting for your confirmation.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "mbparvezme",
   "engines": { "vscode": "^1.90.0" },
   "license": "MIT",
@@ -53,20 +53,28 @@
           "default": true,
           "description": "Play a sound when the AI finishes a response."
         },
-        "aiCodingAlerts.enableOsNotification": {
+        "aiCodingAlerts.finishedAlertDelay": {
           "order": 7,
+          "type": "number",
+          "default": 10,
+          "minimum": 0,
+          "maximum": 120,
+          "description": "Seconds of silence required before a finished-response alert plays. Intermediate completions while Claude keeps working are skipped; 0 alerts on every completion."
+        },
+        "aiCodingAlerts.enableOsNotification": {
+          "order": 8,
           "type": "boolean",
           "default": true,
           "description": "Show an OS-level notification on an alert."
         },
         "aiCodingAlerts.enableWindowFocus": {
-          "order": 8,
+          "order": 9,
           "type": "boolean",
           "default": true,
           "description": "Bring the VS Code window to the foreground on an alert."
         },
         "aiCodingAlerts.port": {
-          "order": 9,
+          "order": 10,
           "type": "number",
           "default": 51789,
           "description": "Local port the extension listens on for agent alerts."
