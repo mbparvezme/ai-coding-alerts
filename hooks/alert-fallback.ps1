@@ -10,8 +10,11 @@ $messages = @{
   finished = "Claude Code finished responding"
 }
 
-$root = Split-Path -Parent $PSScriptRoot
-$file = Join-Path $root "media\sounds\$($sounds[$Kind])"
+$dir = Join-Path $PSScriptRoot "sounds"
+if (-not (Test-Path $dir)) {
+  $dir = Join-Path (Split-Path -Parent $PSScriptRoot) "media\sounds"
+}
+$file = Join-Path $dir $sounds[$Kind]
 if (-not (Test-Path $file)) { exit 0 }
 
 if ([IO.Path]::GetExtension($file) -eq ".wav") {

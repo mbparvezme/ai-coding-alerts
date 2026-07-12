@@ -1,8 +1,9 @@
 # Change Log
 
-## Unreleased
+## 0.4.0
 
-- Windows fallback hooks (`hooks/alert-hook.cmd` + `hooks/alert-fallback.ps1`): forward to the extension when VS Code is listening, play the sound directly when it is not.
+- One-click Claude Code hook setup: first-run prompt plus an "Install Claude Code Hooks" command. Merges hooks into `~/.claude/settings.json` idempotently (backup written first), deploys scripts and sounds to the stable `~/.ai-coding-alerts/` folder, and re-syncs them when the port setting changes.
+- Fallback hooks for Windows, macOS, and Linux: forward to the extension when VS Code is listening, play the sound (and show an OS notification when available) directly when it is not.
 
 ## 0.3.0
 

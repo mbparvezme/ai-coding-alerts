@@ -2,7 +2,7 @@
   "name": "ai-coding-alerts",
   "displayName": "AI Coding Alerts",
   "description": "Get a sound, an OS notification, and window focus when Claude Code or another AI agent is waiting for your confirmation.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "mbparvezme",
   "engines": { "vscode": "^1.90.0" },
   "license": "MIT",
@@ -90,7 +90,8 @@
     },
     "commands": [
       { "command": "aiCodingAlerts.clearHistory", "title": "AI Coding Alerts: Clear History" },
-      { "command": "aiCodingAlerts.testAlert", "title": "AI Coding Alerts: Send Test Alert" }
+      { "command": "aiCodingAlerts.testAlert", "title": "AI Coding Alerts: Send Test Alert" },
+      { "command": "aiCodingAlerts.installHooks", "title": "AI Coding Alerts: Install Claude Code Hooks" }
     ]
   },
   "scripts": {

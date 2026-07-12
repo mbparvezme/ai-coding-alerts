@@ -19,7 +19,9 @@ Get a sound, an OS-level notification, and window focus the moment Claude Code (
 
 ### Claude Code hooks
 
-Add these hooks to your Claude Code settings (`~/.claude/settings.json`) so Claude tells the extension when it needs you:
+On first run the extension offers to set up the hooks for you — click **Set up** and you are done. You can rerun this anytime with **AI Coding Alerts: Install Claude Code Hooks** from the command palette. Automatic setup copies the hook scripts to `~/.ai-coding-alerts/` (a stable path that survives extension updates), merges the hooks into `~/.claude/settings.json` without touching your other settings (a `.backup` copy is written first), and keeps the scripts in sync when you change the port.
+
+To set them up by hand instead, add these hooks to your Claude Code settings (`~/.claude/settings.json`):
 
 ```json
 {
@@ -65,15 +67,11 @@ Claude Code pipes the hook JSON on stdin; `-d @-` forwards it to the extension. 
 - `Stop` alerts when Claude finishes responding and is waiting for you. Works everywhere, including the GUI. Remove it if you find per-turn alerts too chatty.
 - `PreToolUse` alerts just before Claude runs a permission-gated tool — the moment a permission popup can appear in the GUI. It also fires for tools you have already allowlisted, so tune the `matcher` to the tools you actually gate.
 
-### Alerts without VS Code (Windows)
+### Alerts without VS Code
 
-The plain `curl` hooks above only reach the extension while VS Code is running. To keep sound alerts working when VS Code is closed (for example while using the Claude Code desktop app or terminal CLI alone), point the hooks at `hooks/alert-hook.cmd` from this repository instead:
+The plain `curl` hooks above only reach the extension while VS Code is running. Automatic setup instead points the hooks at `alert-hook.cmd` (Windows) or `alert-hook.sh` (macOS/Linux) in `~/.ai-coding-alerts/`. These forward the payload to the extension when it is listening; when nothing answers (VS Code closed — for example while using the Claude Code desktop app or terminal CLI alone), the companion fallback script plays the alert sound directly (alarm for popups, chime for finished — edit the table at the top of the fallback script to change them) and shows an OS notification when available (BurntToast on Windows, `osascript` on macOS, `notify-send` on Linux). Alerts that arrive while VS Code is closed are not recorded in the history or dashboard.
 
-```json
-{ "type": "command", "command": "cmd /c \"D:\\ai-coding-alerts\\hooks\\alert-hook.cmd\" popup" }
-```
-
-Use the argument `popup` for `Notification` and `PreToolUse` hooks and `finished` for `Stop`. The script forwards the payload to the extension when it is listening; when nothing answers, `hooks/alert-fallback.ps1` plays the alert sound directly (alarm for popups, chime for finished — edit the table at the top of that file to change them) and shows a toast if the BurntToast module is installed. Alerts that arrive while VS Code is closed are not recorded in the history or dashboard. If you change `aiCodingAlerts.port`, update the port inside `alert-hook.cmd` too.
+For manual use, the same scripts live in this repository's `hooks/` folder — pass `popup` for `Notification` and `PreToolUse` hooks and `finished` for `Stop`.
 
 ### OS notification prerequisites
 

@@ -13,6 +13,38 @@ import { runCommand } from "./platform/runCommand";
 import { currentOs } from "./platform/Platform";
 import { HistoryViewProvider } from "./views/HistoryViewProvider";
 import { DashboardViewProvider } from "./views/DashboardViewProvider";
+import { HookInstaller } from "./setup/HookInstaller";
+
+const HOOKS_PROMPT_DISMISSED = "aiCodingAlerts.hooksPromptDismissed";
+const HOOKS_GUIDE_URL = "https://github.com/mbparvezme/ai-coding-alerts#claude-code-hooks";
+
+function installHooks(installer: HookInstaller): void {
+  try {
+    installer.install();
+    vscode.window.showInformationMessage("AI Coding Alerts: Claude Code hooks are set up. New Claude Code sessions will send alerts here.");
+  } catch (e) {
+    vscode.window.showErrorMessage(`AI Coding Alerts: hook setup failed. ${String(e instanceof Error ? e.message : e)}`);
+  }
+}
+
+async function offerHookSetup(installer: HookInstaller, state: vscode.Memento): Promise<void> {
+  if (state.get(HOOKS_PROMPT_DISMISSED) || installer.status() !== "setup-needed") {
+    return;
+  }
+  const choice = await vscode.window.showInformationMessage(
+    "AI Coding Alerts needs Claude Code hooks to receive alerts. Set them up automatically?",
+    "Set up",
+    "Show instructions",
+    "Don't ask again"
+  );
+  if (choice === "Set up") {
+    installHooks(installer);
+  } else if (choice === "Show instructions") {
+    void vscode.env.openExternal(vscode.Uri.parse(HOOKS_GUIDE_URL));
+  } else if (choice === "Don't ask again") {
+    await state.update(HOOKS_PROMPT_DISMISSED, true);
+  }
+}
 
 export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel("AI Coding Alerts");
@@ -43,6 +75,14 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const registry = new DetectorRegistry([new ClaudeCodeDetector()]);
 
+  const installer = new HookInstaller(os, context.extensionUri.fsPath, () => config.read().port);
+  try {
+    installer.refreshScripts();
+  } catch (e) {
+    output.appendLine(`Hook script refresh failed: ${String(e)}`);
+  }
+  void offerHookSetup(installer, context.globalState);
+
   const handlePayload = (payload: unknown): void => {
     const alert = registry.detect(payload);
     if (alert) {
@@ -72,6 +112,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.registerWebviewViewProvider(HistoryViewProvider.viewId, historyView),
     vscode.window.registerWebviewViewProvider(DashboardViewProvider.viewId, dashboardView),
     vscode.commands.registerCommand("aiCodingAlerts.clearHistory", () => history.clear()),
+    vscode.commands.registerCommand("aiCodingAlerts.installHooks", () => installHooks(installer)),
     vscode.commands.registerCommand("aiCodingAlerts.testAlert", () =>
       handlePayload({ hook_event_name: "Notification", message: "Test alert" })
     ),
@@ -79,6 +120,11 @@ export function activate(context: vscode.ExtensionContext): void {
       await server.stop();
       server = new IngressServer(handlePayload);
       await startServer();
+      try {
+        installer.refreshScripts();
+      } catch (e) {
+        output.appendLine(`Hook script refresh failed: ${String(e)}`);
+      }
     }),
     { dispose: () => void server.stop() }
   );
