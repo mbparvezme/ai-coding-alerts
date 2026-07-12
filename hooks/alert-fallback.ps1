@@ -10,6 +10,8 @@ $messages = @{
   finished = "Claude Code finished responding"
 }
 
+if (-not $sounds.ContainsKey($Kind)) { exit 0 }
+
 $dir = Join-Path $PSScriptRoot "sounds"
 if (-not (Test-Path $dir)) {
   $dir = Join-Path (Split-Path -Parent $PSScriptRoot) "media\sounds"

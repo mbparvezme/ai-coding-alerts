@@ -1,11 +1,12 @@
 import * as vscode from "vscode";
 import { ConfigService } from "./config/ConfigService";
+import { createAlert } from "./model/Alert";
 import { resolveSoundPath, soundChoiceFor } from "./config/soundResolver";
 import { HistoryStore } from "./history/HistoryStore";
 import { DetectorRegistry } from "./detection/DetectorRegistry";
 import { ClaudeCodeDetector } from "./detection/ClaudeCodeDetector";
 import { AlertBus } from "./alert/AlertBus";
-import { CompletionDebouncer } from "./alert/CompletionDebouncer";
+import { AlertScheduler } from "./alert/AlertScheduler";
 import { IngressServer } from "./ingress/IngressServer";
 import { SoundPlayer } from "./reactors/SoundPlayer";
 import { OsNotifier } from "./reactors/OsNotifier";
@@ -84,15 +85,18 @@ export function activate(context: vscode.ExtensionContext): void {
   }
   void offerHookSetup(installer, context.globalState);
 
-  const debouncer = new CompletionDebouncer(
-    () => config.read().finishedAlertDelay * 1000,
+  const scheduler = new AlertScheduler(
+    {
+      popupMs: () => config.read().popupAlertDelay * 1000,
+      finishedMs: () => config.read().finishedAlertDelay * 1000
+    },
     (alert) => void bus.emit(alert)
   );
 
   const handlePayload = (payload: unknown): void => {
     const alert = registry.detect(payload);
     if (alert) {
-      debouncer.push(alert);
+      scheduler.push(alert);
     } else {
       output.appendLine(`Ignored unrecognized payload: ${JSON.stringify(payload)}`);
     }
@@ -120,7 +124,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("aiCodingAlerts.clearHistory", () => history.clear()),
     vscode.commands.registerCommand("aiCodingAlerts.installHooks", () => installHooks(installer)),
     vscode.commands.registerCommand("aiCodingAlerts.testAlert", () =>
-      handlePayload({ hook_event_name: "Notification", message: "Test alert" })
+      void bus.emit(createAlert({ agent: "claude-code", type: "notification", message: "Test alert" }))
     ),
     config.onDidChange(async () => {
       await server.stop();

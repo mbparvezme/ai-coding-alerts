@@ -9,7 +9,7 @@ test("canHandle accepts a Notification hook payload", () => {
 });
 
 test("canHandle rejects unrelated payloads", () => {
-  assert.equal(detector.canHandle({ hook_event_name: "PostToolUse" }), false);
+  assert.equal(detector.canHandle({ hook_event_name: "SessionStart" }), false);
   assert.equal(detector.canHandle(null), false);
   assert.equal(detector.canHandle("nope"), false);
 });
@@ -69,4 +69,24 @@ test("parse falls back to the command when PreToolUse has no description", () =>
 test("parse maps PreToolUse without input to a default message", () => {
   const alert = detector.parse({ hook_event_name: "PreToolUse", tool_name: "Write" });
   assert.equal(alert.message, "Claude Code wants to use Write");
+});
+
+test("parse maps PermissionRequest to a permission alert", () => {
+  const alert = detector.parse({
+    hook_event_name: "PermissionRequest",
+    tool_name: "Bash",
+    tool_input: { command: "npm install" }
+  });
+  assert.equal(alert.type, "permission");
+  assert.equal(alert.message, "Bash: npm install");
+});
+
+test("parse maps PostToolUse to an activity signal", () => {
+  const alert = detector.parse({ hook_event_name: "PostToolUse", tool_name: "Bash" });
+  assert.equal(alert.type, "activity");
+});
+
+test("parse maps PostToolUseFailure to an activity signal", () => {
+  const alert = detector.parse({ hook_event_name: "PostToolUseFailure", tool_name: "Bash" });
+  assert.equal(alert.type, "activity");
 });

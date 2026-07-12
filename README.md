@@ -91,6 +91,7 @@ Popup alerts (a permission popup with options is waiting for you) and finished a
 | `aiCodingAlerts.finishedCustomSoundPath` | `""` | Absolute path used when `finishedSound` is `custom`. |
 | `aiCodingAlerts.enablePopupSound` | `true` | Toggle the popup alert sound. |
 | `aiCodingAlerts.enableFinishedSound` | `true` | Toggle the finished-response sound. |
+| `aiCodingAlerts.popupAlertDelay` | `3` | Grace seconds before a popup alert plays; acting on the popup first dismisses it. |
 | `aiCodingAlerts.finishedAlertDelay` | `10` | Seconds of silence before a finished alert plays; intermediate completions are skipped. |
 | `aiCodingAlerts.enableOsNotification` | `true` | Toggle the OS notification. |
 | `aiCodingAlerts.enableWindowFocus` | `true` | Toggle window focus on alert. |

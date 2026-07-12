@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.6.0
+
+- Popup alerts get a grace period (`popupAlertDelay`, default 3s): acting on the popup before it elapses dismisses the alert. `PostToolUse` events signal the action.
+- `PermissionRequest` hook support: popup alerts fire exactly when a permission dialog appears.
+- `activity` hook kind: silent in the fallback scripts, cancels pending alerts in the extension.
+
 ## 0.5.0
 
 - Finished alerts wait for a quiet period (`finishedAlertDelay`, default 10s) so intermediate completions while Claude keeps working stay silent; only the final completion plays.

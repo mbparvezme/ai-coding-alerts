@@ -6,9 +6,12 @@ case "$kind" in
     file="chime.wav"
     message="Claude Code finished responding"
     ;;
-  *)
+  popup)
     file="alarm.wav"
     message="Claude Code is waiting for your decision"
+    ;;
+  *)
+    exit 0
     ;;
 esac
 

@@ -5,6 +5,7 @@ const SECTION = "aiCodingAlerts";
 
 export interface AlertSettings extends SoundChoices {
   port: number;
+  popupAlertDelay: number;
   finishedAlertDelay: number;
   enableOsNotification: boolean;
   enableWindowFocus: boolean;
@@ -15,6 +16,7 @@ export class ConfigService {
     const config = vscode.workspace.getConfiguration(SECTION);
     return {
       port: config.get<number>("port", 51789),
+      popupAlertDelay: config.get<number>("popupAlertDelay", 3),
       finishedAlertDelay: config.get<number>("finishedAlertDelay", 10),
       popup: {
         sound: config.get<string>("popupSound", "alarm"),

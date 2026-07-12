@@ -1,6 +1,6 @@
 import { Os } from "../platform/Platform";
 
-export type AlertKind = "popup" | "finished";
+export type AlertKind = "popup" | "finished" | "activity";
 
 export interface DesiredHook {
   event: string;
@@ -10,7 +10,9 @@ export interface DesiredHook {
 
 const EVENTS: Array<{ event: string; matcher?: string; kind: AlertKind }> = [
   { event: "Notification", kind: "popup" },
+  { event: "PermissionRequest", kind: "popup" },
   { event: "PreToolUse", matcher: "Bash|Write|Edit|NotebookEdit", kind: "popup" },
+  { event: "PostToolUse", matcher: "Bash|Write|Edit|NotebookEdit", kind: "activity" },
   { event: "Stop", kind: "finished" }
 ];
 
