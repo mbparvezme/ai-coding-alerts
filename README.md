@@ -65,6 +65,16 @@ Claude Code pipes the hook JSON on stdin; `-d @-` forwards it to the extension. 
 - `Stop` alerts when Claude finishes responding and is waiting for you. Works everywhere, including the GUI. Remove it if you find per-turn alerts too chatty.
 - `PreToolUse` alerts just before Claude runs a permission-gated tool — the moment a permission popup can appear in the GUI. It also fires for tools you have already allowlisted, so tune the `matcher` to the tools you actually gate.
 
+### Alerts without VS Code (Windows)
+
+The plain `curl` hooks above only reach the extension while VS Code is running. To keep sound alerts working when VS Code is closed (for example while using the Claude Code desktop app or terminal CLI alone), point the hooks at `hooks/alert-hook.cmd` from this repository instead:
+
+```json
+{ "type": "command", "command": "cmd /c \"D:\\ai-coding-alerts\\hooks\\alert-hook.cmd\" popup" }
+```
+
+Use the argument `popup` for `Notification` and `PreToolUse` hooks and `finished` for `Stop`. The script forwards the payload to the extension when it is listening; when nothing answers, `hooks/alert-fallback.ps1` plays the alert sound directly (alarm for popups, chime for finished — edit the table at the top of that file to change them) and shows a toast if the BurntToast module is installed. Alerts that arrive while VS Code is closed are not recorded in the history or dashboard. If you change `aiCodingAlerts.port`, update the port inside `alert-hook.cmd` too.
+
 ### OS notification prerequisites
 
 - **macOS:** `brew install terminal-notifier`

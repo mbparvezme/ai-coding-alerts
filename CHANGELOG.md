@@ -1,5 +1,9 @@
 # Change Log
 
+## Unreleased
+
+- Windows fallback hooks (`hooks/alert-hook.cmd` + `hooks/alert-fallback.ps1`): forward to the extension when VS Code is listening, play the sound directly when it is not.
+
 ## 0.3.0
 
 - Separate sounds for popup (pending decision) and finished-response alerts, each with its own built-in choice, custom file path, and on/off toggle. Replaces `aiCodingAlerts.sound` and `aiCodingAlerts.customSoundPath`.
