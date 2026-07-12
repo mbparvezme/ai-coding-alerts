@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.6.1
+
+- Fix Windows hooks silently doing nothing: the `cmd /c` prefix nested inside Claude Code's own cmd invocation opened an interactive shell that swallowed the payload. Hook commands now quote the script path directly.
+- The hook script checks for a listener with netstat instead of inferring from curl failures: no more duplicate alerts or multi-second stalls when the extension responds slowly; the fallback runs only when VS Code is closed.
+- `PreToolUse` hooks dropped in favor of `PermissionRequest` (verified firing in the VS Code GUI): popup alerts now trigger only for real permission dialogs, never for allowlisted tools.
+
 ## 0.6.0
 
 - Popup alerts get a grace period (`popupAlertDelay`, default 3s): acting on the popup before it elapses dismisses the alert. `PostToolUse` events signal the action.

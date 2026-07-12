@@ -10,7 +10,7 @@ test("installs hooks into empty settings", () => {
   assert.equal(changed, true);
   const hooks = settings.hooks as Record<string, Array<{ matcher?: string; hooks: Array<{ command: string }> }>>;
   assert.equal(hooks.Notification.length, 1);
-  assert.equal(hooks.PreToolUse[0].matcher, "Bash|Write|Edit|NotebookEdit");
+  assert.equal(hooks.PostToolUse[0].matcher, "Bash|Write|Edit|NotebookEdit");
   assert.ok(hooks.Stop[0].hooks[0].command.includes("alert-hook.cmd"));
 });
 
@@ -34,6 +34,19 @@ test("keeps unrelated settings and foreign hooks", () => {
   assert.equal(hooks.SessionStart[0].hooks[0].command, "echo hi");
   assert.equal(hooks.Stop.length, 2);
   assert.equal(hooks.Stop[0].hooks[0].command, "say done");
+});
+
+test("removes our hooks from events no longer desired", () => {
+  const original = {
+    hooks: {
+      PreToolUse: [
+        { matcher: "Bash", hooks: [{ type: "command", command: 'cmd /c "C:\\u\\.ai-coding-alerts\\alert-hook.cmd" popup' }] }
+      ]
+    }
+  };
+  const { settings } = mergeHooks(original, desired);
+  const hooks = settings.hooks as Record<string, unknown>;
+  assert.equal(hooks.PreToolUse, undefined);
 });
 
 test("replaces stale curl and old script hooks instead of duplicating", () => {

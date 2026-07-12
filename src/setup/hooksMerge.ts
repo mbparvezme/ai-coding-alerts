@@ -25,15 +25,23 @@ export function mergeHooks(
   const hooks = (result.hooks ?? {}) as Record<string, HookGroup[]>;
   result.hooks = hooks;
 
-  for (const { event, matcher, command } of desired) {
-    const kept = (hooks[event] ?? [])
+  for (const event of Object.keys(hooks)) {
+    const kept = hooks[event]
       .map((group) => ({ ...group, hooks: (group.hooks ?? []).filter((h) => !isOurs(h)) }))
       .filter((group) => group.hooks.length > 0);
+    if (kept.length > 0) {
+      hooks[event] = kept;
+    } else {
+      delete hooks[event];
+    }
+  }
+
+  for (const { event, matcher, command } of desired) {
     const ours: HookGroup = { hooks: [{ type: "command", command }] };
     if (matcher) {
       ours.matcher = matcher;
     }
-    hooks[event] = [...kept, ours];
+    hooks[event] = [...(hooks[event] ?? []), ours];
   }
 
   return { settings: result, changed: JSON.stringify(result) !== before };

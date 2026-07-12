@@ -46,7 +46,17 @@ To set them up by hand instead, add these hooks to your Claude Code settings (`~
         ]
       }
     ],
-    "PreToolUse": [
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "curl -s -X POST http://127.0.0.1:51789/alert -H \"content-type: application/json\" -d @-"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
       {
         "matcher": "Bash|Write|Edit|NotebookEdit",
         "hooks": [
@@ -61,17 +71,18 @@ To set them up by hand instead, add these hooks to your Claude Code settings (`~
 }
 ```
 
-Claude Code pipes the hook JSON on stdin; `-d @-` forwards it to the extension. The escaped double quotes keep the command portable across Windows (cmd) and Unix shells. If you change `aiCodingAlerts.port`, update the URL to match.
+Claude Code pipes the hook JSON on stdin; `-d @-` forwards it to the extension. The escaped double quotes keep the command portable across Windows (cmd) and Unix shells. If you change `aiCodingAlerts.port`, update the URL to match. Avoid wrapping commands in `cmd /c` on Windows — Claude Code already runs hooks through cmd, and the nested quoting breaks silently.
 
-- `Notification` alerts when Claude is waiting for a permission confirmation or idle. **Terminal CLI only** — the Claude Code GUI (VS Code chat panel and desktop app) currently does not emit notification events.
-- `Stop` alerts when Claude finishes responding and is waiting for you. Works everywhere, including the GUI. Remove it if you find per-turn alerts too chatty.
-- `PreToolUse` alerts just before Claude runs a permission-gated tool — the moment a permission popup can appear in the GUI. It also fires for tools you have already allowlisted, so tune the `matcher` to the tools you actually gate.
+- `PermissionRequest` alerts the moment a permission dialog appears — the main popup signal, works in the VS Code chat panel and desktop app.
+- `Stop` alerts when Claude finishes responding and is waiting for you.
+- `PostToolUse` sends a silent activity signal so a pending popup alert is dismissed when you approve it quickly, and intermediate completions stay quiet.
+- `Notification` alerts when Claude is waiting for a permission confirmation or idle. **Terminal CLI only** — the GUI does not emit notification events.
 
 ### Alerts without VS Code
 
 The plain `curl` hooks above only reach the extension while VS Code is running. Automatic setup instead points the hooks at `alert-hook.cmd` (Windows) or `alert-hook.sh` (macOS/Linux) in `~/.ai-coding-alerts/`. These forward the payload to the extension when it is listening; when nothing answers (VS Code closed — for example while using the Claude Code desktop app or terminal CLI alone), the companion fallback script plays the alert sound directly (alarm for popups, chime for finished — edit the table at the top of the fallback script to change them) and shows an OS notification when available (BurntToast on Windows, `osascript` on macOS, `notify-send` on Linux). Alerts that arrive while VS Code is closed are not recorded in the history or dashboard.
 
-For manual use, the same scripts live in this repository's `hooks/` folder — pass `popup` for `Notification` and `PreToolUse` hooks and `finished` for `Stop`.
+For manual use, the same scripts live in this repository's `hooks/` folder — pass `popup` for `Notification` and `PermissionRequest` hooks, `finished` for `Stop`, and `activity` for `PostToolUse` (activity is always silent; it only dismisses pending alerts).
 
 ### OS notification prerequisites
 
