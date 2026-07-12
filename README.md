@@ -1,114 +1,133 @@
 # AI Coding Alerts
 
-Get a sound, an OS-level notification, and window focus the moment Claude Code (or another AI coding agent) is waiting for your confirmation.
+**Never miss the moment your AI assistant needs you.**
 
-## Features
+When you ask Claude Code to work on something, it often needs a while — and then suddenly it's waiting for *you*: a permission popup needs a Yes or No, or the answer is ready. If you've switched to another window in the meantime, you find out minutes later.
 
-- Local listener that any agent can POST alerts to.
-- Sound alert with four built-in sounds or your own file.
-- OS-level notification (terminal-notifier on macOS, `notify-send` on Linux, BurntToast on Windows).
-- Brings the VS Code window to the foreground.
-- **Alert History** panel: every alert with timestamp, status, and one-click sound replay.
-- **Dashboard** panel: alerts today, approved/denied, average response time, peak hour, most common type.
+AI Coding Alerts fixes that. The moment Claude Code needs your attention, you get a **sound**, an optional **desktop notification**, and VS Code comes to the **foreground** — even if you were reading email or watching a video.
 
-## Setup
+## What it does
 
-1. Install the extension.
-2. Open the **AI Coding Alerts** view in the activity bar.
-3. (Optional) Adjust settings — see below.
+- 🔔 **Popup alert** — plays a sound the instant a permission popup appears and waits for your decision.
+- ✅ **Finished alert** — plays a different sound when Claude has completely finished its work and is idle.
+- 🖥️ **Desktop notification and window focus** — optional, both can be turned off.
+- 📜 **Alert History panel** — every alert with its time and message, plus a replay button.
+- 📊 **Dashboard panel** — today's alert count, approvals/denials, average response time, busiest hour.
+- 🔇 **Smart timing** — no alert spam:
+  - If you answer a popup *before* the alert plays, the alert is cancelled. You were already there — no need to ring.
+  - While Claude is still working through a multi-step task, intermediate "done" moments stay silent. The finished sound plays only after real silence, meaning the task is truly complete.
+- 🚪 **Works even when VS Code is closed** — alerts from the Claude Code desktop app or terminal still play a sound.
 
-### Claude Code hooks
+## Getting started
 
-On first run the extension offers to set up the hooks for you — click **Set up** and you are done. You can rerun this anytime with **AI Coding Alerts: Install Claude Code Hooks** from the command palette. Automatic setup copies the hook scripts to `~/.ai-coding-alerts/` (a stable path that survives extension updates), merges the hooks into `~/.claude/settings.json` without touching your other settings (a `.backup` copy is written first), and keeps the scripts in sync when you change the port.
+1. **Install the extension** in VS Code.
+2. On first run, a message appears: *"AI Coding Alerts needs Claude Code hooks to receive alerts. Set them up automatically?"* — click **Set up**. That's it.
+3. Try it: open the command palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run **AI Coding Alerts: Send Test Alert**. You should hear a sound.
 
-To set them up by hand instead, add these hooks to your Claude Code settings (`~/.claude/settings.json`):
+If you skipped the first-run message, run **AI Coding Alerts: Install Claude Code Hooks** from the command palette at any time.
+
+> **What does "Set up" actually do?** Claude Code can run small scripts (called *hooks*) when certain things happen — like a permission popup appearing. Setup copies the alert scripts to a folder in your home directory (`~/.ai-coding-alerts/`) and registers them in your Claude Code settings file. Your existing settings are untouched, and a backup copy is saved first.
+
+## The two alert types
+
+| | **Popup alert** | **Finished alert** |
+|---|---|---|
+| When | A permission popup is on screen, waiting for your decision | Claude finished everything and is idle |
+| Default sound | `alarm` | `chime` |
+| Default timing | Plays after 3 seconds — cancelled if you answer first | Plays after 10 seconds of silence |
+
+The waiting times are the trick that keeps alerts meaningful:
+
+- **Popup delay (3 s):** if you're already at the keyboard and click Allow right away, the alert never plays. If you've wandered off, it rings 3 seconds after the popup appeared.
+- **Finished delay (10 s):** Claude reports "done" after every message segment, even mid-task. The extension waits — if Claude keeps working, those signals are discarded. Only 10 quiet seconds mean the real end.
+
+Both delays are adjustable, and `0` disables the waiting entirely.
+
+## Customizing
+
+Open VS Code Settings (`Ctrl+,` / `Cmd+,`) and search for **AI Coding Alerts**. The controls appear in this order:
+
+1. **Popup Sound** — pick from 8 built-in sounds, or `custom` for your own file.
+2. **Finished Sound** — same choices, independent of the popup sound.
+3. **Popup Custom Sound Path** — full path to your own `.wav` or `.mp3`, used when Popup Sound is `custom` (e.g. `D:\sounds\bell.mp3`).
+4. **Finished Custom Sound Path** — same, for the finished alert.
+5. **Enable Popup Sound** — turn popup sounds on/off.
+6. **Enable Finished Sound** — turn finished sounds on/off.
+7. **Popup Alert Delay** — the grace period in seconds (default 3).
+8. **Finished Alert Delay** — the quiet period in seconds (default 10).
+9. **Enable Os Notification** — desktop notification on/off.
+10. **Enable Window Focus** — bring VS Code to the front on/off.
+11. **Port** — the local port the extension listens on (default 51789). Change it only if another program uses that port; the hook scripts are updated automatically.
+
+Built-in sounds: `chime`, `ping`, `knock`, `alarm`, `drop`, `frog`, `swip`, `wire`. To audition one, pick it and run **AI Coding Alerts: Send Test Alert**.
+
+All changes take effect immediately — no restart needed.
+
+## The panels
+
+Click the **AI Coding Alerts icon** in the activity bar (the left edge of VS Code) to open two panels:
+
+- **Alert History** — every alert with its message and time. Mark entries Approved/Denied to feed the statistics, or hit **Replay** to hear that alert's sound again. Clear it anytime with **AI Coding Alerts: Clear History**.
+- **Dashboard** — live stats: alerts today, approved vs. denied, average time you take to respond, your peak alert hour, and the most common alert type.
+
+## Alerts when VS Code is closed
+
+You still get sounds when using the **Claude Code desktop app** or the **terminal CLI** with VS Code closed. The hook script first tries to reach the extension; if VS Code isn't running, it plays the sound itself (alarm for popups, chime for finished) and shows a desktop notification when available.
+
+Two small limitations in that mode: alerts aren't recorded in History/Dashboard (nothing is running to store them), and the fallback sounds are fixed to alarm/chime unless you edit the table at the top of `~/.ai-coding-alerts/alert-fallback.ps1` (Windows) or `alert-fallback.sh` (macOS/Linux).
+
+## Desktop notification requirements (optional)
+
+Sounds and window focus work out of the box. The desktop notification bubble needs one small helper, depending on your system:
+
+- **Windows:** run `Install-Module -Name BurntToast -Scope CurrentUser` in PowerShell
+- **macOS:** `brew install terminal-notifier` (the fallback script uses the built-in notifier instead)
+- **Linux:** `notify-send` (package `libnotify-bin`) and `wmctrl` for window focus
+
+Without these, notifications are silently skipped — everything else keeps working.
+
+## Troubleshooting
+
+- **No sound at all?** Run **AI Coding Alerts: Send Test Alert**. If that plays, the extension is fine — rerun **AI Coding Alerts: Install Claude Code Hooks** to repair the hooks, then start a new Claude Code conversation.
+- **"Port 51789 is unavailable" warning?** Another program (often a second VS Code window) is using the port. Close extra windows, or change the Port setting.
+- **Alert plays but you already answered?** Increase **Popup Alert Delay** — it's the window in which your answer cancels the alert.
+- **Finished sound during long tasks?** Increase **Finished Alert Delay** so short pauses don't count as "done".
+
+## For advanced users
+
+### Manual hook setup
+
+If you prefer editing `~/.claude/settings.json` yourself, register these events (this is the simple `curl` variant — it works only while VS Code is running):
 
 ```json
 {
   "hooks": {
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:51789/alert -H \"content-type: application/json\" -d @-"
-          }
-        ]
-      }
+    "PermissionRequest": [
+      { "hooks": [ { "type": "command", "command": "curl -s -X POST http://127.0.0.1:51789/alert -H \"content-type: application/json\" -d @-" } ] }
     ],
     "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:51789/alert -H \"content-type: application/json\" -d @-"
-          }
-        ]
-      }
-    ],
-    "PermissionRequest": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:51789/alert -H \"content-type: application/json\" -d @-"
-          }
-        ]
-      }
+      { "hooks": [ { "type": "command", "command": "curl -s -X POST http://127.0.0.1:51789/alert -H \"content-type: application/json\" -d @-" } ] }
     ],
     "PostToolUse": [
-      {
-        "matcher": "Bash|Write|Edit|NotebookEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "curl -s -X POST http://127.0.0.1:51789/alert -H \"content-type: application/json\" -d @-"
-          }
-        ]
-      }
+      { "matcher": "Bash|Write|Edit|NotebookEdit", "hooks": [ { "type": "command", "command": "curl -s -X POST http://127.0.0.1:51789/alert -H \"content-type: application/json\" -d @-" } ] }
+    ],
+    "Notification": [
+      { "hooks": [ { "type": "command", "command": "curl -s -X POST http://127.0.0.1:51789/alert -H \"content-type: application/json\" -d @-" } ] }
     ]
   }
 }
 ```
 
-Claude Code pipes the hook JSON on stdin; `-d @-` forwards it to the extension. The escaped double quotes keep the command portable across Windows (cmd) and Unix shells. If you change `aiCodingAlerts.port`, update the URL to match. Avoid wrapping commands in `cmd /c` on Windows — Claude Code already runs hooks through cmd, and the nested quoting breaks silently.
+What each event does:
 
-- `PermissionRequest` alerts the moment a permission dialog appears — the main popup signal, works in the VS Code chat panel and desktop app.
-- `Stop` alerts when Claude finishes responding and is waiting for you.
-- `PostToolUse` sends a silent activity signal so a pending popup alert is dismissed when you approve it quickly, and intermediate completions stay quiet.
-- `Notification` alerts when Claude is waiting for a permission confirmation or idle. **Terminal CLI only** — the GUI does not emit notification events.
+- `PermissionRequest` — fires the moment a permission dialog appears. The main popup signal; works in the VS Code chat panel and the desktop app.
+- `Stop` — fires when Claude finishes responding.
+- `PostToolUse` — a silent activity signal: it dismisses a pending popup alert when you approve quickly and keeps intermediate completions quiet.
+- `Notification` — waiting/idle notices. Terminal CLI only; the GUI does not emit these.
 
-### Alerts without VS Code
+For the closed-VS-Code fallback, point the commands at the scripts in `~/.ai-coding-alerts/` instead (this is what automatic setup does): `"C:\Users\you\.ai-coding-alerts\alert-hook.cmd" popup` on Windows or `"/home/you/.ai-coding-alerts/alert-hook.sh" popup` elsewhere. Pass `popup` for `PermissionRequest`/`Notification`, `finished` for `Stop`, and `activity` for `PostToolUse`. On Windows, do **not** wrap the command in `cmd /c` — Claude Code already runs hooks through cmd, and the nested quoting breaks silently.
 
-The plain `curl` hooks above only reach the extension while VS Code is running. Automatic setup instead points the hooks at `alert-hook.cmd` (Windows) or `alert-hook.sh` (macOS/Linux) in `~/.ai-coding-alerts/`. These forward the payload to the extension when it is listening; when nothing answers (VS Code closed — for example while using the Claude Code desktop app or terminal CLI alone), the companion fallback script plays the alert sound directly (alarm for popups, chime for finished — edit the table at the top of the fallback script to change them) and shows an OS notification when available (BurntToast on Windows, `osascript` on macOS, `notify-send` on Linux). Alerts that arrive while VS Code is closed are not recorded in the history or dashboard.
-
-For manual use, the same scripts live in this repository's `hooks/` folder — pass `popup` for `Notification` and `PermissionRequest` hooks, `finished` for `Stop`, and `activity` for `PostToolUse` (activity is always silent; it only dismisses pending alerts).
-
-### OS notification prerequisites
-
-- **macOS:** `brew install terminal-notifier`
-- **Linux:** `notify-send` (from `libnotify-bin`) and `wmctrl` for window focus
-- **Windows:** `Install-Module -Name BurntToast -Scope CurrentUser`
-
-## Settings
-
-Popup alerts (a permission popup with options is waiting for you) and finished alerts (the AI completed a response) each have their own sound, custom path, and toggle. Built-in sounds: `chime`, `ping`, `knock`, `alarm`, `drop`, `frog`, `swip`, `wire`.
-
-| Setting | Default | Description |
-|---|---|---|
-| `aiCodingAlerts.popupSound` | `alarm` | Sound for popup alerts; `custom` uses your own file. |
-| `aiCodingAlerts.finishedSound` | `chime` | Sound for finished-response alerts; `custom` uses your own file. |
-| `aiCodingAlerts.popupCustomSoundPath` | `""` | Absolute path used when `popupSound` is `custom`. |
-| `aiCodingAlerts.finishedCustomSoundPath` | `""` | Absolute path used when `finishedSound` is `custom`. |
-| `aiCodingAlerts.enablePopupSound` | `true` | Toggle the popup alert sound. |
-| `aiCodingAlerts.enableFinishedSound` | `true` | Toggle the finished-response sound. |
-| `aiCodingAlerts.popupAlertDelay` | `3` | Grace seconds before a popup alert plays; acting on the popup first dismisses it. |
-| `aiCodingAlerts.finishedAlertDelay` | `10` | Seconds of silence before a finished alert plays; intermediate completions are skipped. |
-| `aiCodingAlerts.enableOsNotification` | `true` | Toggle the OS notification. |
-| `aiCodingAlerts.enableWindowFocus` | `true` | Toggle window focus on alert. |
-| `aiCodingAlerts.port` | `51789` | Local port the extension listens on. |
-
-## Test it
+### Testing from a terminal
 
 ```bash
 curl -X POST http://127.0.0.1:51789/alert \
@@ -116,8 +135,22 @@ curl -X POST http://127.0.0.1:51789/alert \
   -d '{"hook_event_name":"Notification","message":"Test alert"}'
 ```
 
-Or run the command **AI Coding Alerts: Send Test Alert**.
+### Settings reference
 
-## Adding another agent
+| Setting ID | Default |
+|---|---|
+| `aiCodingAlerts.popupSound` | `alarm` |
+| `aiCodingAlerts.finishedSound` | `chime` |
+| `aiCodingAlerts.popupCustomSoundPath` | `""` |
+| `aiCodingAlerts.finishedCustomSoundPath` | `""` |
+| `aiCodingAlerts.enablePopupSound` | `true` |
+| `aiCodingAlerts.enableFinishedSound` | `true` |
+| `aiCodingAlerts.popupAlertDelay` | `3` |
+| `aiCodingAlerts.finishedAlertDelay` | `10` |
+| `aiCodingAlerts.enableOsNotification` | `true` |
+| `aiCodingAlerts.enableWindowFocus` | `true` |
+| `aiCodingAlerts.port` | `51789` |
 
-Implement `AgentDetector` (`src/detection/AgentDetector.ts`) and register it in the `DetectorRegistry` list in `src/extension.ts`. The alert layer needs no changes.
+### Adding another AI agent
+
+The extension is agent-agnostic: anything that can POST JSON to `http://127.0.0.1:51789/alert` can raise alerts. To add first-class support for a new agent, implement `AgentDetector` (`src/detection/AgentDetector.ts`) and register it in the `DetectorRegistry` list in `src/extension.ts` — the alert, history, and dashboard layers need no changes.
