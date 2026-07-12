@@ -6,3 +6,7 @@ node_modules/**
 esbuild.js
 tsconfig.json
 **/*.map
+**/*.ts
+.gitattributes
+.gitignore
+*.vsix
