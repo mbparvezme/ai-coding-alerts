@@ -17,16 +17,28 @@ AI Coding Alerts fixes that. The moment Claude Code needs your attention, you ge
   - If you answer a popup *before* the alert plays, the alert is cancelled. You were already there — no need to ring.
   - While Claude is still working through a multi-step task, intermediate "done" moments stay silent. The finished sound plays only after real silence, meaning the task is truly complete.
 - 🚪 **Works even when VS Code is closed** — alerts from the Claude Code desktop app or terminal still play a sound.
+- 🔕 **Snooze / mute from the status bar** — one click to silence alerts for 15/30/60 minutes or until you turn them back on.
+- 🔁 **Repeat until acknowledged** — an unanswered popup keeps nudging you until you respond.
+- 📱 **Mobile push via Telegram** — optionally get alerts on your phone, even away from your desk.
+- 🩺 **Health check** — one command tells you if everything's wired up correctly.
 
 ## Getting started
 
 1. **Install the extension** in VS Code.
-2. On first run, a message appears: *"AI Coding Alerts needs Claude Code hooks to receive alerts. Set them up automatically?"* — click **Set up**. That's it.
+2. **Set up the Claude Code hooks.** On first run, a message appears: *"AI Coding Alerts needs Claude Code hooks to receive alerts. Set them up automatically?"* — click **Set up**. That's it.
 3. Try it: open the command palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run **AI Coding Alerts: Send Test Alert**. You should hear a sound.
 
-If you skipped the first-run message, run **AI Coding Alerts: Install Claude Code Hooks** from the command palette at any time.
-
 > **What does "Set up" actually do?** Claude Code can run small scripts (called *hooks*) when certain things happen — like a permission popup appearing. Setup copies the alert scripts to a folder in your home directory (`~/.ai-coding-alerts/`) and registers them in your Claude Code settings file. Your existing settings are untouched, and a backup copy is saved first.
+
+### Missed the setup message?
+
+The first-run message appears only once, and clicking **Don't ask again** hides it for good. If you dismissed it — or you're not sure the hooks were ever installed — you can run the setup yourself at any time:
+
+1. Open the command palette (`Ctrl+Shift+P` / `Cmd+Shift+P`).
+2. Type **AI Coding Alerts** and select **AI Coding Alerts: Install Claude Code Hooks**.
+3. A confirmation appears once the hooks are registered. Now run **AI Coding Alerts: Send Test Alert** to confirm you hear a sound.
+
+This does exactly the same thing as the **Set up** button. It's safe to run even if setup already happened — it only adds this extension's hooks, never duplicates them, and always backs up your Claude Code settings first. Run it again any time the alerts stop working (for example after you move the extension or edit your Claude Code settings).
 
 ## The two alert types
 
@@ -57,7 +69,12 @@ Open VS Code Settings (`Ctrl+,` / `Cmd+,`) and search for **AI Coding Alerts**. 
 8. **Finished Alert Delay** — the quiet period in seconds (default 10).
 9. **Enable Os Notification** — desktop notification on/off.
 10. **Enable Window Focus** — bring VS Code to the front on/off.
-11. **Port** — the local port the extension listens on (default 51789). Change it only if another program uses that port; the hook scripts are updated automatically.
+11. **Port** — the local port the extension listens on (default 51789). Change it only if another program uses that port; the hook scripts are updated automatically. If the port is busy, the extension picks a nearby free one on its own and updates the hooks to match.
+12. **Enable Telegram Push** — also send alerts to your phone (see [Mobile alerts via Telegram](#mobile-alerts-via-telegram)).
+13. **Telegram Bot Token** — the token for your Telegram bot.
+14. **Telegram Chat ID** — where the bot sends your alerts.
+15. **Escalation Repeats** — how many times an unanswered popup repeats its sound (default 3, `0` turns it off).
+16. **Escalation Interval** — seconds between those repeats (default 30).
 
 Built-in sounds: `chime`, `ping`, `knock`, `alarm`, `drop`, `frog`, `swip`, `wire`. To audition one, pick it and run **AI Coding Alerts: Send Test Alert**.
 
@@ -65,10 +82,36 @@ All changes take effect immediately — no restart needed.
 
 ## The panels
 
-Click the **AI Coding Alerts icon** in the activity bar (the left edge of VS Code) to open two panels:
+Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run one of these to open a panel:
 
-- **Alert History** — every alert with its message and time. Mark entries Approved/Denied to feed the statistics, or hit **Replay** to hear that alert's sound again. Clear it anytime with **AI Coding Alerts: Clear History**.
-- **Dashboard** — live stats: alerts today, approved vs. denied, average time you take to respond, your peak alert hour, and the most common alert type.
+- **AI Coding Alerts: Open Alert History** — every alert with its message and time. Mark entries Approved/Denied to feed the statistics, or hit **Replay** to hear that alert's sound again. Clear it anytime with **AI Coding Alerts: Clear History**.
+- **AI Coding Alerts: Open Dashboard** — live stats: alerts today, approved vs. denied, average time you take to respond, your peak alert hour, and the most common alert type.
+
+The History panel also has a **search box and Agent / Type / Date filters** so you can quickly find a past alert.
+
+## Snooze and mute
+
+A **🔔 Alerts** item sits in the status bar (bottom-left). Click it to snooze alerts for **15, 30, or 60 minutes**, or **mute until you turn them back on**. While muted it shows **🔕 Alerts muted**, sound / notifications / focus are silenced, but alerts are still recorded in History so you can see what you missed. Clicking **Replay** in the History panel always plays, even while muted.
+
+## Repeat until acknowledged
+
+If a popup is waiting and you don't respond, the popup sound repeats every **Escalation Interval** seconds, up to **Escalation Repeats** times, then stops on its own. Responding to the popup (or a new alert arriving) cancels the repeats immediately. Set **Escalation Repeats** to `0` to disable this.
+
+## Mobile alerts via Telegram
+
+Want alerts on your phone when you step away? Set up a free Telegram bot:
+
+1. In Telegram, message **@BotFather**, send `/newbot`, and follow the prompts. It gives you a **bot token** (like `123456:ABC-DEF...`).
+2. Message **@userinfobot** to get your **chat ID** (a number).
+3. Open the new bot's chat and send it any message once (Telegram requires this before a bot can message you).
+4. In VS Code Settings: turn on **Enable Telegram Push**, paste the **Telegram Bot Token** and **Telegram Chat ID**.
+5. Run **AI Coding Alerts: Send Test Alert** — you should get a message on your phone.
+
+Alerts are sent directly to Telegram from your machine. Muting the extension also pauses Telegram push.
+
+## Something not working?
+
+Run **AI Coding Alerts: Run Health Check** from the Command Palette. It checks that the extension is listening, the Claude Code hooks are registered, and the alert scripts are deployed — and offers to fix anything that's missing.
 
 ## Alerts when VS Code is closed
 

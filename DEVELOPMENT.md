@@ -20,7 +20,7 @@ The extension is a small local server plus a set of reactions. A Claude Code **h
 
 Two design rules hold the whole thing together:
 
-1. **The core is decoupled from VS Code.** Everything under `src/` that isn't a `*ViewProvider`, `ConfigService`, `extension.ts`, or `HookInstaller` is plain TypeScript with no `import "vscode"`. That keeps the logic unit-testable with the Node test runner and no VS Code host. Dependencies on the editor are injected in from `extension.ts`.
+1. **The core is decoupled from VS Code.** Everything under `src/` that isn't a `*Panel`, `ConfigService`, `extension.ts`, or `HookInstaller` is plain TypeScript with no `import "vscode"`. That keeps the logic unit-testable with the Node test runner and no VS Code host. Dependencies on the editor are injected in from `extension.ts`.
 
 2. **Detection is separate from reaction.** Recognizing *who* sent an event and *what kind* it is (`src/detection`) is independent from *what happens* as a result (`src/reactors`). Adding a new agent never touches the alert layer, and adding a new reaction never touches detection.
 
@@ -112,15 +112,14 @@ src/
     HookInstaller.ts      Deploys scripts to ~/.ai-coding-alerts, writes ~/.claude/settings.json.
   views/
     webviewHtml.ts        Shared webview HTML shell (CSP, nonce, asset URIs).
-    HistoryViewProvider.ts   History panel; approve/deny/replay messages.
-    DashboardViewProvider.ts Dashboard panel; renders StatsService output.
+    HistoryPanel.ts       On-demand history webview panel; approve/deny/replay messages.
+    DashboardPanel.ts     On-demand dashboard webview panel; renders StatsService output.
 
 hooks/                    Shipped in the VSIX, deployed to ~/.ai-coding-alerts on setup.
   alert-hook.cmd/.sh      Forward to the extension, or run the fallback if it's closed.
   alert-fallback.ps1/.sh  Play the sound directly (used only when VS Code is closed).
 
-media/                    panel.css, history.js, dashboard.js, icon.svg (activity bar),
-                          icon.png (marketplace), sounds/*.
+media/                    panel.css, history.js, dashboard.js, icon.png (marketplace), sounds/*.
 
 test/                     Mirrors src/. Node test runner. No vscode import anywhere.
 ```

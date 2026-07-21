@@ -8,5 +8,8 @@ body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); 
 .status.pending { color: var(--vscode-testing-iconQueued); }
 button { margin-right: 6px; background: var(--vscode-button-secondaryBackground); color: var(--vscode-button-secondaryForeground); border: none; padding: 3px 8px; cursor: pointer; border-radius: 2px; }
 .empty { opacity: 0.6; font-size: 12px; padding: 12px 0; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; position: sticky; top: 0; background: var(--vscode-editor-background); padding: 4px 0; }
+.filters input, .filters select { background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border, transparent); padding: 3px 6px; border-radius: 2px; }
+.filters input { flex: 1; min-width: 120px; }
 .metric { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--vscode-panel-border); }
 .metric .value { font-weight: 600; }

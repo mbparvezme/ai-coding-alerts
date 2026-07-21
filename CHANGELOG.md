@@ -1,5 +1,18 @@
 # Change Log
 
+## 0.7.0
+
+- The Activity Bar icon is gone. Open the two panels from the Command Palette instead: **AI Coding Alerts: Open Alert History** and **AI Coding Alerts: Open Dashboard**. Each opens as an editor tab and reuses the same tab if already open.
+- Fix the panels rendering empty: the webview now signals when it is ready and the extension pushes data in response, instead of posting once before the webview's script has loaded (which dropped the message).
+- Restart the alert listener and rewrite the hook scripts only when the port setting actually changes, instead of on every settings change — no more briefly dropping alerts while unrelated settings are edited.
+- Cap alert history at the 500 most recent entries so long-running installs don't accumulate an ever-growing store.
+- **Snooze / mute** from the status bar: a bell item toggles alerts off for 15/30/60 minutes or indefinitely. Muting silences sound, notifications, and focus but still records history; explicit Replay still plays.
+- **Repeat until acknowledged**: an unanswered popup re-rings its sound (`escalationRepeats`, default 3, every `escalationInterval` seconds). Responding or a new alert stops it.
+- **Search / filter history** by text, agent, type, and date range in the Alert History panel.
+- **Health check** command reports whether the listener, hooks, and scripts are set up, with one-click fixes.
+- **Auto port-fallback**: if the configured port is busy, the extension binds a nearby free port and updates the hooks to match.
+- **Telegram mobile push** (optional): forward alerts to your phone via a Telegram bot (`enableTelegramPush` + bot token + chat ID).
+
 ## 0.6.1
 
 - Fix Windows hooks silently doing nothing: the `cmd /c` prefix nested inside Claude Code's own cmd invocation opened an interactive shell that swallowed the payload. Hook commands now quote the script path directly.

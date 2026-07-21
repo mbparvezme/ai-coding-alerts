@@ -13,10 +13,14 @@ export class SoundPlayer implements Reactor {
   constructor(
     private readonly os: Os,
     private readonly config: SoundConfig,
-    private readonly run: CommandRunner
+    private readonly run: CommandRunner,
+    private readonly muted: () => boolean = () => false
   ) {}
 
   react(alert: Alert): void {
+    if (this.muted()) {
+      return;
+    }
     this.play(alert.type);
   }
 

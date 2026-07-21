@@ -2,7 +2,7 @@
   "name": "ai-coding-alerts",
   "displayName": "AI Coding Alerts",
   "description": "Get a sound, an OS notification, and window focus when Claude Code or another AI agent is waiting for your confirmation.",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "publisher": "mbparvezme",
   "engines": { "vscode": "^1.90.0" },
   "license": "MIT",
@@ -90,28 +90,51 @@
           "type": "number",
           "default": 51789,
           "description": "Local port the extension listens on for agent alerts."
+        },
+        "aiCodingAlerts.enableTelegramPush": {
+          "order": 12,
+          "type": "boolean",
+          "default": false,
+          "description": "Also send alerts to your phone via a Telegram bot. Requires a bot token and chat ID below."
+        },
+        "aiCodingAlerts.telegramBotToken": {
+          "order": 13,
+          "type": "string",
+          "default": "",
+          "description": "Telegram bot token from @BotFather (looks like 123456:ABC-DEF...). Used when Telegram push is enabled."
+        },
+        "aiCodingAlerts.telegramChatId": {
+          "order": 14,
+          "type": "string",
+          "default": "",
+          "description": "Your Telegram chat ID (get it from @userinfobot). The bot sends alerts to this chat."
+        },
+        "aiCodingAlerts.escalationRepeats": {
+          "order": 15,
+          "type": "number",
+          "default": 3,
+          "minimum": 0,
+          "maximum": 20,
+          "description": "If you don't respond to a popup, repeat its sound this many times. 0 turns repeating off. Responding (or a new alert) stops it."
+        },
+        "aiCodingAlerts.escalationInterval": {
+          "order": 16,
+          "type": "number",
+          "default": 30,
+          "minimum": 5,
+          "maximum": 600,
+          "description": "Seconds to wait between repeated popup sounds."
         }
       }
     },
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "aiCodingAlerts",
-          "title": "AI Coding Alerts",
-          "icon": "media/icon.svg"
-        }
-      ]
-    },
-    "views": {
-      "aiCodingAlerts": [
-        { "id": "aiCodingAlerts.history", "name": "Alert History", "type": "webview" },
-        { "id": "aiCodingAlerts.dashboard", "name": "Dashboard", "type": "webview" }
-      ]
-    },
     "commands": [
+      { "command": "aiCodingAlerts.openHistory", "title": "AI Coding Alerts: Open Alert History" },
+      { "command": "aiCodingAlerts.openDashboard", "title": "AI Coding Alerts: Open Dashboard" },
       { "command": "aiCodingAlerts.clearHistory", "title": "AI Coding Alerts: Clear History" },
       { "command": "aiCodingAlerts.testAlert", "title": "AI Coding Alerts: Send Test Alert" },
-      { "command": "aiCodingAlerts.installHooks", "title": "AI Coding Alerts: Install Claude Code Hooks" }
+      { "command": "aiCodingAlerts.installHooks", "title": "AI Coding Alerts: Install Claude Code Hooks" },
+      { "command": "aiCodingAlerts.healthCheck", "title": "AI Coding Alerts: Run Health Check" },
+      { "command": "aiCodingAlerts.toggleMute", "title": "AI Coding Alerts: Snooze / Mute Alerts" }
     ]
   },
   "scripts": {

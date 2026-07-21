@@ -1,3 +1,4 @@
+const vscode = acquireVsCodeApi();
 const root = document.getElementById("root");
 
 function ms(v) { return v == null ? "—" : (v / 1000).toFixed(1) + "s"; }
@@ -21,3 +22,5 @@ function render(s) {
 window.addEventListener("message", (e) => {
   if (e.data.type === "stats") render(e.data.stats);
 });
+
+vscode.postMessage({ type: "ready" });

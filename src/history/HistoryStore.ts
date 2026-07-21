@@ -6,6 +6,7 @@ export interface KeyValueStore {
 }
 
 const KEY = "aiCodingAlerts.history";
+const MAX_ENTRIES = 500;
 
 type Listener = () => void;
 
@@ -24,7 +25,7 @@ export class HistoryStore {
   }
 
   add(alert: Alert): void {
-    this.persist([alert, ...this.list()]);
+    this.persist([alert, ...this.list()].slice(0, MAX_ENTRIES));
   }
 
   setStatus(id: string, status: AlertStatus, at: number = Date.now()): void {

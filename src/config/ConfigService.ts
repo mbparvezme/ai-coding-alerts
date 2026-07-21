@@ -9,6 +9,9 @@ export interface AlertSettings extends SoundChoices {
   finishedAlertDelay: number;
   enableOsNotification: boolean;
   enableWindowFocus: boolean;
+  telegram: { enabled: boolean; botToken: string; chatId: string };
+  escalationRepeats: number;
+  escalationInterval: number;
 }
 
 export class ConfigService {
@@ -29,7 +32,14 @@ export class ConfigService {
         enabled: config.get<boolean>("enableFinishedSound", true)
       },
       enableOsNotification: config.get<boolean>("enableOsNotification", true),
-      enableWindowFocus: config.get<boolean>("enableWindowFocus", true)
+      enableWindowFocus: config.get<boolean>("enableWindowFocus", true),
+      telegram: {
+        enabled: config.get<boolean>("enableTelegramPush", false),
+        botToken: config.get<string>("telegramBotToken", ""),
+        chatId: config.get<string>("telegramChatId", "")
+      },
+      escalationRepeats: config.get<number>("escalationRepeats", 3),
+      escalationInterval: config.get<number>("escalationInterval", 30)
     };
   }
 
