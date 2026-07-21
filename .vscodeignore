@@ -2,6 +2,7 @@
 docs/**
 test/**
 src/**
+server/**
 node_modules/**
 esbuild.js
 tsconfig.json
