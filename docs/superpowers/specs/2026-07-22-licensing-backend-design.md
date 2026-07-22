@@ -107,9 +107,10 @@ injectable seam, matching the extension's DI style (cf. `TelegramNotifier`'s inj
 - **`CloudflareEmailDeliverer` is implemented and unit-tested now** — it takes an injected
   `send_email` sender, so the test uses a fake and needs no real domain. It is simply not wired
   into the webhook (default stays no-op) until a domain exists.
-- **Turning email on later** = register/point a domain → verify on Cloudflare (auto DKIM/SPF) →
-  add the `send_email` binding in `wrangler.toml` → swap the default deliverer to
-  `CloudflareEmailDeliverer`. No new logic. First 3,000 emails/month are free on the paid plan.
+- Placeholder `From:` is `licenses@aicodingalert.com` (changeable at deployment).
+- **Turning email on later** = register/verify the domain on Cloudflare (auto DKIM/SPF) → add the
+  `send_email` binding in `wrangler.toml` → swap the default deliverer to `CloudflareEmailDeliverer`.
+  No new logic. First 3,000 emails/month are free on the paid plan.
 
 ## 5. Extension side (`src/license/`)
 
@@ -169,7 +170,8 @@ Consumer of the backend. Kept separate from the alert pipeline.
 | Offline **grace window** | **14 days** |
 | **Email delivery** in v1 | Provider = **Cloudflare Email Sending** (Workers Paid plan; first 3k/mo free). Seam (§4.7) built; `CloudflareEmailDeliverer` implemented + unit-tested but **not wired** — default is no-op and the success page delivers the key. Activation deferred until a **sending domain** exists (none yet). |
 | **Device add-ons** | Not in v1. Flat **3 devices**. Kept add-on-ready: the webhook sets `device_limit` via a single "resolve plan device limit" function, so tiered devices are a later extension of that function + tests — no schema/activation change. |
-| Worker **host/domain** | **`workers.dev` subdomain for now** (e.g. `ai-coding-alerts.<account>.workers.dev`), baked into the extension as a constant. Swap to a custom domain before public launch. |
+| Worker **host/domain** | Placeholder **`https://aicodingalert.com`** baked into the extension as the backend base-URL constant. **Changeable at deployment** (may point at a `workers.dev` subdomain or the real domain once registered). |
+| Email **From** address | Placeholder **`licenses@aicodingalert.com`**. Same domain; changeable at deployment. Real sending stays disabled (no-op deliverer) until the domain is registered + verified on Cloudflare. |
 
 ## 11. Resources (verify against live docs — versions move)
 
