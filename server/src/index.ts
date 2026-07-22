@@ -1,11 +1,15 @@
 /**
  * AI Coding Alerts — licensing backend (Cloudflare Worker).
- *
- * Design & contract: ../docs/superpowers/specs/2026-07-22-licensing-backend-design.md
- *
- * This is a scaffold: routes are wired but not yet implemented. Build them in the
- * dedicated implementation conversation, test-first (Vitest + workers pool).
+ * Design: ../docs/superpowers/specs/2026-07-22-licensing-backend-design.md
  */
+import { importSigningKey } from "./lib/jwt";
+import { generateLicenseKey } from "./license/keygen";
+import { noopDeliverer } from "./license/deliver";
+import { handlePaddleWebhook } from "./handlers/webhook";
+import { handleActivate, type LicenseDeps } from "./handlers/activate";
+import { handleValidate } from "./handlers/validate";
+import { handleDeactivate } from "./handlers/deactivate";
+import { handleSuccessPage } from "./handlers/successPage";
 
 export interface Env {
   DB: D1Database;
@@ -13,40 +17,37 @@ export interface Env {
   LICENSE_SIGNING_PRIVATE_KEY: string;
 }
 
+// Ed25519 key import is cheap but do it once per isolate.
+let signingKeyPromise: Promise<CryptoKey> | null = null;
+function getSigningKey(env: Env): Promise<CryptoKey> {
+  if (!signingKeyPromise) signingKeyPromise = importSigningKey(env.LICENSE_SIGNING_PRIVATE_KEY);
+  return signingKeyPromise;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const route = `${request.method} ${url.pathname}`;
 
-    switch (route) {
-      case "POST /webhooks/paddle":
-        // Verify Paddle signature; on subscription events upsert a license row,
-        // generating a license key on creation. Spec §4.1, §4.5.
-        return notImplemented("paddle webhook");
-
-      case "GET /license":
-        // Post-checkout success page: show the buyer their key for ?txn=. Spec §4.1.
-        return notImplemented("license success page");
-
-      case "POST /license/activate":
-        // { licenseKey, deviceId } -> check status + device_limit, record activation,
-        // return a signed token (TTL 7d). Spec §4.1, §4.4.
-        return notImplemented("activate");
-
-      case "POST /license/validate":
-        // Periodic re-check -> fresh signed token + current status. Spec §4.1.
-        return notImplemented("validate");
-
-      case "POST /license/deactivate":
-        // { licenseKey, deviceId } -> free a device slot. Spec §4.1.
-        return notImplemented("deactivate");
-
-      default:
-        return new Response("Not found", { status: 404 });
+    if (route === "POST /webhooks/paddle") {
+      return handlePaddleWebhook(request, {
+        db: env.DB,
+        webhookSecret: env.PADDLE_WEBHOOK_SECRET,
+        deliver: noopDeliverer, // v1: success page delivers; swap to CloudflareEmailDeliverer when a domain exists
+        now: () => Date.now(),
+        newKey: generateLicenseKey
+      });
     }
+
+    if (route === "GET /license") {
+      return handleSuccessPage(url, env.DB);
+    }
+
+    const licenseDeps: LicenseDeps = { db: env.DB, signingKey: await getSigningKey(env), now: () => Date.now() };
+    if (route === "POST /license/activate") return handleActivate(request, licenseDeps);
+    if (route === "POST /license/validate") return handleValidate(request, licenseDeps);
+    if (route === "POST /license/deactivate") return handleDeactivate(request, licenseDeps);
+
+    return new Response("Not found", { status: 404 });
   }
 } satisfies ExportedHandler<Env>;
-
-function notImplemented(route: string): Response {
-  return Response.json({ ok: false, error: "not_implemented", route }, { status: 501 });
-}

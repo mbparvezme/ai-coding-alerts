@@ -25,8 +25,8 @@ export async function makeTestKeypair(): Promise<{
     "sign",
     "verify"
   ])) as CryptoKeyPair;
-  const raw = new Uint8Array(await crypto.subtle.exportKey("raw", pair.publicKey));
-  const pkcs8 = new Uint8Array(await crypto.subtle.exportKey("pkcs8", pair.privateKey));
+  const raw = new Uint8Array((await crypto.subtle.exportKey("raw", pair.publicKey)) as ArrayBuffer);
+  const pkcs8 = new Uint8Array((await crypto.subtle.exportKey("pkcs8", pair.privateKey)) as ArrayBuffer);
   return {
     privateKey: pair.privateKey,
     publicKeyB64: btoa(String.fromCharCode(...raw)),
