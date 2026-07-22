@@ -95,6 +95,19 @@ Random, unguessable (e.g. `crypto.randomUUID()` twice, or a 32+ char base32 stri
 - `LICENSE_SIGNING_PRIVATE_KEY` — to sign tokens.
 - (D1 binding configured in `wrangler.toml`.)
 
+### 4.7 Key delivery seam (`KeyDeliverer`)
+Email delivery of the key is **deferred** (no sending domain yet — see §10), but the webhook is
+built against an injectable seam so it can be added later without rearchitecting, matching the
+extension's DI style (cf. `TelegramNotifier`'s injected `send`).
+
+- Interface: `KeyDeliverer = (email: string, licenseKey: string) => Promise<void>`.
+- v1 default implementation: **no-op** (optionally logs). The success page (`GET /license?txn=`)
+  is the actual delivery channel in v1.
+- The webhook calls `deliver(email, key)` after minting a key on `subscription.created`.
+- Adding real email later = one new deliverer (Resend: one HTTPS call + `RESEND_API_KEY`; or
+  Cloudflare `send_email` binding) plus its own test, wired in one place. Both require a verified
+  sending domain first.
+
 ## 5. Extension side (`src/license/`)
 
 Consumer of the backend. Kept separate from the alert pipeline.
@@ -129,7 +142,8 @@ Consumer of the backend. Kept separate from the alert pipeline.
 
 ## 8. Out of scope (YAGNI for this sub-project)
 
-- Email delivery of keys (success page shows it; add email later).
+- Email *delivery* of keys — the `KeyDeliverer` seam (§4.7) is built and wired but defaults to a
+  no-op; the success page shows the key. A real email sender is a later drop-in (needs a domain).
 - Trials, accounts/login (key-based only).
 - Refund UI (Paddle handles it).
 - The premium features themselves — they only consume `isPro()`/`requirePro()`.
@@ -142,13 +156,16 @@ Consumer of the backend. Kept separate from the alert pipeline.
 3. Decide the **price points** (monthly / yearly) and the **device limit** (default 3).
 4. Generate the **Ed25519 keypair** (private → Worker secret, public → extension constant).
 
-## 10. Open decisions to confirm before/at planning
+## 10. Confirmed decisions (locked at planning, 2026-07-22)
 
-- Monthly & yearly **price** amounts.
-- **Device limit** (default 3 — confirm).
-- Token **TTL** (7 days) and **grace window** (14 days) — confirm.
-- Whether to add **email delivery** of the key in v1 (default: no, success page only).
-- Final **endpoint host/domain** for the Worker.
+| Decision | Value |
+|---|---|
+| Monthly / yearly **price** | **$3.89 / month**, **$36 / year** (create in Paddle **sandbox** first) |
+| **Device limit** | **3** (`licenses.device_limit` default) |
+| Token **TTL** | **7 days** |
+| Offline **grace window** | **14 days** |
+| **Email delivery** in v1 | **Deferred.** Build the `KeyDeliverer` seam (§4.7) as a no-op; success page delivers the key. Real email is a later drop-in once a sending domain exists. |
+| Worker **host/domain** | **`workers.dev` subdomain for now** (e.g. `ai-coding-alerts.<account>.workers.dev`), baked into the extension as a constant. Swap to a custom domain before public launch. |
 
 ## 11. Resources (verify against live docs — versions move)
 
