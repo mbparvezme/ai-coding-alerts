@@ -96,17 +96,20 @@ Random, unguessable (e.g. `crypto.randomUUID()` twice, or a 32+ char base32 stri
 - (D1 binding configured in `wrangler.toml`.)
 
 ### 4.7 Key delivery seam (`KeyDeliverer`)
-Email delivery of the key is **deferred** (no sending domain yet — see §10), but the webhook is
-built against an injectable seam so it can be added later without rearchitecting, matching the
-extension's DI style (cf. `TelegramNotifier`'s injected `send`).
+Provider is decided (**Cloudflare Email Sending**, on the Workers Paid plan), but activation is
+**deferred** because there is no sending domain yet (§10). The webhook is built against an
+injectable seam, matching the extension's DI style (cf. `TelegramNotifier`'s injected `send`).
 
 - Interface: `KeyDeliverer = (email: string, licenseKey: string) => Promise<void>`.
-- v1 default implementation: **no-op** (optionally logs). The success page (`GET /license?txn=`)
-  is the actual delivery channel in v1.
+- **v1 default implementation: no-op** (optionally logs). The success page (`GET /license?txn=`)
+  is the actual delivery channel in v1, so v1 ships and works with no domain.
 - The webhook calls `deliver(email, key)` after minting a key on `subscription.created`.
-- Adding real email later = one new deliverer (Resend: one HTTPS call + `RESEND_API_KEY`; or
-  Cloudflare `send_email` binding) plus its own test, wired in one place. Both require a verified
-  sending domain first.
+- **`CloudflareEmailDeliverer` is implemented and unit-tested now** — it takes an injected
+  `send_email` sender, so the test uses a fake and needs no real domain. It is simply not wired
+  into the webhook (default stays no-op) until a domain exists.
+- **Turning email on later** = register/point a domain → verify on Cloudflare (auto DKIM/SPF) →
+  add the `send_email` binding in `wrangler.toml` → swap the default deliverer to
+  `CloudflareEmailDeliverer`. No new logic. First 3,000 emails/month are free on the paid plan.
 
 ## 5. Extension side (`src/license/`)
 
@@ -164,7 +167,8 @@ Consumer of the backend. Kept separate from the alert pipeline.
 | **Device limit** | **3** (`licenses.device_limit` default) |
 | Token **TTL** | **7 days** |
 | Offline **grace window** | **14 days** |
-| **Email delivery** in v1 | **Deferred.** Build the `KeyDeliverer` seam (§4.7) as a no-op; success page delivers the key. Real email is a later drop-in once a sending domain exists. |
+| **Email delivery** in v1 | Provider = **Cloudflare Email Sending** (Workers Paid plan; first 3k/mo free). Seam (§4.7) built; `CloudflareEmailDeliverer` implemented + unit-tested but **not wired** — default is no-op and the success page delivers the key. Activation deferred until a **sending domain** exists (none yet). |
+| **Device add-ons** | Not in v1. Flat **3 devices**. Kept add-on-ready: the webhook sets `device_limit` via a single "resolve plan device limit" function, so tiered devices are a later extension of that function + tests — no schema/activation change. |
 | Worker **host/domain** | **`workers.dev` subdomain for now** (e.g. `ai-coding-alerts.<account>.workers.dev`), baked into the extension as a constant. Swap to a custom domain before public launch. |
 
 ## 11. Resources (verify against live docs — versions move)
