@@ -25,6 +25,14 @@ Premium features that will *later* consume this system (not built here): remote 
 | Backend stack | **Cloudflare Workers + D1** | Serverless, cheap, global, SQL; extends cleanly to the later push relay / cloud sync |
 | Enforcement | **Soft gate** (client checks a signed token) for now | A determined user can patch it out; acceptable at launch. Hard-gated features come later via server-side relay. |
 
+### 2.1 Why license keys, not user accounts
+
+The product is a **single-tier, offline-capable, locally-running** extension. Its entire job runs on the developer's machine — there is no server-side per-user data to log into. So we sell a **binary Pro entitlement** proved by a signed token, not an identity.
+
+Rejected: a **user-account/auth app** (signup, email verification, password/OTP, sessions, reset/recovery). It would multiply the backend surface (5 endpoints → also signup/login/verify/reset/session), force us to custody password hashes + PII (a breach target), and put a login modal inside the editor with sessions that expire mid-flight — exactly the friction the offline token design avoids. Accounts only earn their cost when the account *is* the product (team seats, a web dashboard, cross-device synced server state) — none of which v1 has.
+
+**Migration stays open (confirmed):** `licenses` already carries `email` + `paddle_customer_id`. Adding accounts later = a new `users` table linked by `paddle_customer_id`; the license/activation/token machinery is untouched. Choosing keys now does not foreclose the account model later.
+
 ## 3. Architecture
 
 ```
