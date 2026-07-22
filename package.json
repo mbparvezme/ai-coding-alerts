@@ -134,7 +134,9 @@
       { "command": "aiCodingAlerts.testAlert", "title": "AI Coding Alerts: Send Test Alert" },
       { "command": "aiCodingAlerts.installHooks", "title": "AI Coding Alerts: Install Claude Code Hooks" },
       { "command": "aiCodingAlerts.healthCheck", "title": "AI Coding Alerts: Run Health Check" },
-      { "command": "aiCodingAlerts.toggleMute", "title": "AI Coding Alerts: Snooze / Mute Alerts" }
+      { "command": "aiCodingAlerts.toggleMute", "title": "AI Coding Alerts: Snooze / Mute Alerts" },
+      { "command": "aiCodingAlerts.enterLicense", "title": "AI Coding Alerts: Enter Pro License" },
+      { "command": "aiCodingAlerts.manageLicense", "title": "AI Coding Alerts: Manage License" }
     ]
   },
   "scripts": {

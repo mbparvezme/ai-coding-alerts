@@ -22,6 +22,7 @@ import { HistoryPanel } from "./views/HistoryPanel";
 import { DashboardPanel } from "./views/DashboardPanel";
 import { HookInstaller } from "./setup/HookInstaller";
 import { buildHealthReport } from "./health/healthReport";
+import { createLicenseService, registerLicenseCommands } from "./license/wire";
 
 const HOOKS_PROMPT_DISMISSED = "aiCodingAlerts.hooksPromptDismissed";
 const HOOKS_GUIDE_URL = "https://github.com/mbparvezme/ai-coding-alerts#claude-code-hooks";
@@ -167,6 +168,14 @@ export function activate(context: vscode.ExtensionContext): void {
   updateMuteStatus();
   muteStatus.show();
 
+  const license = createLicenseService(context);
+  void license
+    .init()
+    .then(() => license.revalidateIfDue())
+    .catch((e) => output.appendLine(`License init skipped: ${String(e)}`));
+  registerLicenseCommands(context, license);
+  const licenseRecheck = setInterval(() => void license.revalidateIfDue(), 6 * 60 * 60 * 1000);
+
   context.subscriptions.push(
     output,
     muteStatus,
@@ -241,7 +250,8 @@ export function activate(context: vscode.ExtensionContext): void {
       server = new IngressServer(handlePayload);
       await startServer();
     }),
-    { dispose: () => void server.stop() }
+    { dispose: () => void server.stop() },
+    { dispose: () => clearInterval(licenseRecheck) }
   );
 }
 
