@@ -26,6 +26,7 @@ describe("repository", () => {
     await applySchema(db());
     await db().prepare("DELETE FROM activations").run();
     await db().prepare("DELETE FROM licenses").run();
+    await db().prepare("DELETE FROM processed_events").run();
   });
 
   it("inserts and reads a license by key, subscription, and transaction", async () => {
@@ -76,5 +77,20 @@ describe("repository", () => {
       .bind("ACA-KEY1", "dev-1")
       .first<{ last_seen_at: number }>();
     expect(row?.last_seen_at).toBe(5000);
+  });
+
+  it("hasProcessedEvent is false for an unknown event id", async () => {
+    expect(await repo.hasProcessedEvent(db(), "evt_unknown")).toBe(false);
+  });
+
+  it("recordProcessedEvent then hasProcessedEvent reports true", async () => {
+    await repo.recordProcessedEvent(db(), "evt_1", 1000);
+    expect(await repo.hasProcessedEvent(db(), "evt_1")).toBe(true);
+  });
+
+  it("recordProcessedEvent is idempotent (INSERT OR IGNORE) — no error on repeat", async () => {
+    await repo.recordProcessedEvent(db(), "evt_1", 1000);
+    await expect(repo.recordProcessedEvent(db(), "evt_1", 2000)).resolves.not.toThrow();
+    expect(await repo.hasProcessedEvent(db(), "evt_1")).toBe(true);
   });
 });

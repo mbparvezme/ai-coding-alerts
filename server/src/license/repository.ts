@@ -120,3 +120,18 @@ export async function touchLastSeen(
     .bind(now, key, deviceId)
     .run();
 }
+
+export async function hasProcessedEvent(db: D1Database, eventId: string): Promise<boolean> {
+  const row = await db
+    .prepare("SELECT 1 AS x FROM processed_events WHERE event_id = ?")
+    .bind(eventId)
+    .first<{ x: number }>();
+  return row !== null;
+}
+
+export async function recordProcessedEvent(db: D1Database, eventId: string, now: number): Promise<void> {
+  await db
+    .prepare("INSERT OR IGNORE INTO processed_events (event_id, processed_at) VALUES (?, ?)")
+    .bind(eventId, now)
+    .run();
+}

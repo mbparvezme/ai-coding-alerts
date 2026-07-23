@@ -1,5 +1,6 @@
 export interface PaddleEvent {
   kind: "created" | "activated" | "updated" | "canceled" | "past_due" | "transaction" | "ignored";
+  eventId: string | null;
   subscriptionId: string | null;
   customerId: string | null;
   transactionId: string | null;
@@ -31,6 +32,7 @@ function mapPlan(interval: unknown): PaddleEvent["plan"] {
 export function parsePaddleEvent(body: unknown): PaddleEvent {
   const empty: PaddleEvent = {
     kind: "ignored",
+    eventId: null,
     subscriptionId: null,
     customerId: null,
     transactionId: null,
@@ -40,7 +42,8 @@ export function parsePaddleEvent(body: unknown): PaddleEvent {
   };
   if (typeof body !== "object" || body === null) return empty;
 
-  const b = body as { event_type?: unknown; data?: Record<string, unknown> };
+  const b = body as { event_type?: unknown; event_id?: unknown; data?: Record<string, unknown> };
+  const eventId = typeof b.event_id === "string" ? b.event_id : null;
   const kind = KIND_BY_EVENT[String(b.event_type)] ?? "ignored";
   if (kind === "ignored") return empty;
 
@@ -50,6 +53,7 @@ export function parsePaddleEvent(body: unknown): PaddleEvent {
     return {
       ...empty,
       kind,
+      eventId,
       transactionId: (data.id as string) ?? null,
       subscriptionId: (data.subscription_id as string) ?? null
     };
@@ -62,6 +66,7 @@ export function parsePaddleEvent(body: unknown): PaddleEvent {
 
   return {
     kind,
+    eventId,
     subscriptionId: (data.id as string) ?? null,
     customerId: (data.customer_id as string) ?? null,
     transactionId: null,

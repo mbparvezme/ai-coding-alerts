@@ -29,6 +29,10 @@ export async function handlePaddleWebhook(request: Request, deps: WebhookDeps): 
   const event = parsePaddleEvent(parsed);
   const now = deps.now();
 
+  if (event.eventId && (await repo.hasProcessedEvent(deps.db, event.eventId))) {
+    return Response.json({ ok: true, duplicate: true });
+  }
+
   switch (event.kind) {
     case "created":
     case "activated": {
@@ -73,6 +77,10 @@ export async function handlePaddleWebhook(request: Request, deps: WebhookDeps): 
     }
     case "ignored":
       break;
+  }
+
+  if (event.eventId) {
+    await repo.recordProcessedEvent(deps.db, event.eventId, now);
   }
 
   return Response.json({ ok: true });

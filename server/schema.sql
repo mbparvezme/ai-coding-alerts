@@ -23,3 +23,8 @@ CREATE TABLE IF NOT EXISTS activations (
   last_seen_at INTEGER NOT NULL,
   PRIMARY KEY (license_key, device_id)
 );
+
+CREATE TABLE IF NOT EXISTS processed_events (
+  event_id     TEXT PRIMARY KEY,
+  processed_at INTEGER NOT NULL
+);

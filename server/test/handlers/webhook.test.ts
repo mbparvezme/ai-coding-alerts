@@ -45,6 +45,7 @@ describe("handlePaddleWebhook", () => {
     await applySchema(db());
     await db().prepare("DELETE FROM activations").run();
     await db().prepare("DELETE FROM licenses").run();
+    await db().prepare("DELETE FROM processed_events").run();
   });
 
   it("rejects an invalid signature with 401", async () => {
@@ -96,5 +97,43 @@ describe("handlePaddleWebhook", () => {
     await handlePaddleWebhook(await signedRequest({ event_type: "subscription.created", data: { id: "sub_1", customer_id: "c", status: "active", items: [{ price: { billing_cycle: { interval: "month" } } }] } }), deps());
     await handlePaddleWebhook(await signedRequest({ event_type: "transaction.completed", data: { id: "txn_1", subscription_id: "sub_1" } }), deps());
     expect((await repo.getLicenseByTransaction(db(), "txn_1"))?.license_key).toBe("ACA-NEWKEY");
+  });
+
+  it("replay protection — a replayed event_id does not reprocess (e.g. reactivate a canceled license)", async () => {
+    const createdBody = {
+      event_type: "subscription.created",
+      event_id: "evt_created_1",
+      data: { id: "sub_1", customer_id: "c", status: "active", items: [{ price: { billing_cycle: { interval: "month" } } }] }
+    };
+    const createdReq = await signedRequest(createdBody);
+    const createdRes = await handlePaddleWebhook(createdReq, deps());
+    expect(createdRes.status).toBe(200);
+    expect((await repo.getLicenseByKey(db(), "ACA-NEWKEY"))?.status).toBe("active");
+
+    // Cancel the subscription.
+    await handlePaddleWebhook(
+      await signedRequest({ event_type: "subscription.canceled", event_id: "evt_canceled_1", data: { id: "sub_1", status: "canceled" } }),
+      deps()
+    );
+    expect((await repo.getLicenseByKey(db(), "ACA-NEWKEY"))?.status).toBe("canceled");
+
+    // Paddle retries the OLD subscription.created event (same event_id, same body).
+    const replayReq = await signedRequest(createdBody);
+    const replayRes = await handlePaddleWebhook(replayReq, deps({ newKey: () => "ACA-SHOULD-NOT-MINT" }));
+    expect(replayRes.status).toBe(200);
+    expect((await replayRes.json()) as { duplicate?: boolean }).toMatchObject({ duplicate: true });
+
+    // Status must stay canceled — the replayed created event must NOT reactivate it.
+    expect((await repo.getLicenseByKey(db(), "ACA-NEWKEY"))?.status).toBe("canceled");
+    // No second license was minted.
+    const count = await db().prepare("SELECT count(*) AS n FROM licenses WHERE paddle_subscription_id='sub_1'").first<{ n: number }>();
+    expect(count?.n).toBe(1);
+  });
+
+  it("payloads without an event_id are processed normally (dedupe skipped, existing behavior unchanged)", async () => {
+    const req1 = await signedRequest({ event_type: "subscription.created", data: { id: "sub_2", customer_id: "c", status: "active", items: [{ price: { billing_cycle: { interval: "month" } } }] } });
+    const res1 = await handlePaddleWebhook(req1, deps());
+    expect(res1.status).toBe(200);
+    expect((await res1.json()) as { duplicate?: boolean }).not.toMatchObject({ duplicate: true });
   });
 });

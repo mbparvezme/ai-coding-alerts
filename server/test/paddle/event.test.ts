@@ -3,6 +3,7 @@ import { parsePaddleEvent, resolvePlanDeviceLimit } from "../../src/paddle/event
 
 const created = {
   event_type: "subscription.created",
+  event_id: "evt_1",
   data: {
     id: "sub_123",
     customer_id: "ctm_1",
@@ -19,6 +20,23 @@ describe("parsePaddleEvent", () => {
     expect(e.customerId).toBe("ctm_1");
     expect(e.plan).toBe("monthly");
     expect(e.status).toBe("active");
+  });
+
+  it("extracts the top-level event_id", () => {
+    expect(parsePaddleEvent(created).eventId).toBe("evt_1");
+  });
+
+  it("eventId is null when absent", () => {
+    const withoutEventId = {
+      event_type: created.event_type,
+      data: created.data
+    };
+    expect(parsePaddleEvent(withoutEventId).eventId).toBeNull();
+  });
+
+  it("eventId is null for non-object input", () => {
+    expect(parsePaddleEvent(null).eventId).toBeNull();
+    expect(parsePaddleEvent(undefined).eventId).toBeNull();
   });
 
   it("maps a yearly interval to the yearly plan", () => {
