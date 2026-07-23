@@ -1,6 +1,5 @@
 import { verifyPaddleSignature } from "../paddle/signature";
-import { parsePaddleEvent } from "../paddle/event";
-import { resolvePlanDeviceLimit } from "../paddle/event";
+import { parsePaddleEvent, resolvePlanDeviceLimit } from "../paddle/event";
 import type { KeyDeliverer } from "../license/deliver";
 import * as repo from "../license/repository";
 

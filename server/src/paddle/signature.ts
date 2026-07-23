@@ -4,8 +4,11 @@ import { bytesToHex } from "../lib/encoding";
 function parseHeader(header: string): { ts: string; h1: string } | null {
   const parts: Record<string, string> = {};
   for (const segment of header.split(";")) {
-    const [k, v] = segment.split("=");
-    if (k && v) parts[k.trim()] = v.trim();
+    const i = segment.indexOf("=");
+    if (i === -1) continue;
+    const k = segment.slice(0, i).trim();
+    const v = segment.slice(i + 1).trim();
+    if (k && v) parts[k] = v;
   }
   return parts.ts && parts.h1 ? { ts: parts.ts, h1: parts.h1 } : null;
 }
