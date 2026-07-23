@@ -1,5 +1,4 @@
-import { signLicenseToken } from "../lib/jwt";
-import { sha256Hex } from "../lib/encoding";
+import { mintLicenseToken } from "../license/mintToken";
 import * as repo from "../license/repository";
 
 export interface LicenseDeps {
@@ -7,8 +6,6 @@ export interface LicenseDeps {
   signingKey: CryptoKey;
   now: () => number;
 }
-
-const TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 
 export async function handleActivate(request: Request, deps: LicenseDeps): Promise<Response> {
   const body = (await request.json().catch(() => null)) as { licenseKey?: string; deviceId?: string } | null;
@@ -33,18 +30,7 @@ export async function handleActivate(request: Request, deps: LicenseDeps): Promi
   const nowMs = deps.now();
   await repo.upsertActivation(deps.db, body.licenseKey, body.deviceId, nowMs);
 
-  const iat = Math.floor(nowMs / 1000);
-  const token = await signLicenseToken(
-    {
-      sub: await sha256Hex(body.licenseKey),
-      deviceId: body.deviceId,
-      status: license.status,
-      plan: license.plan,
-      iat,
-      exp: iat + TOKEN_TTL_SECONDS
-    },
-    deps.signingKey
-  );
+  const token = await mintLicenseToken(license, body.deviceId, nowMs, deps.signingKey);
 
   return Response.json({ ok: true, token, status: license.status, plan: license.plan, deviceLimit: license.device_limit });
 }
