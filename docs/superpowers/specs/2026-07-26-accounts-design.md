@@ -29,7 +29,7 @@ So this sub-project introduces **accounts**. The account (via GitHub identity) b
 | **Managed features** | **Strictly paid**, account-required | The free DIY bot is the try-before-buy; no free managed allowance, no trial. |
 | **Stack** | **Unified Next.js app on Cloudflare Workers, sharing the same D1** | One codebase/deploy for dashboard + web auth + extension API + Paddle webhook. The backend is being reworked for accounts *anyway*, so the portable crypto core is re-homed once, in the framework with the strongest Paddle/Auth.js support. |
 | **Entitlement token** | **Reuse the existing Ed25519 model**, now account-scoped (`sub = accountId`) | The signing/verification/offline machinery is built and tested; only the `sub` and the issuing path change. |
-| **Token lifetimes** | **7-day TTL / 14-day offline grace / ~3-day recheck** (unchanged) | Decouples revocation lag (short TTL protects the seller) from outage tolerance (long grace protects honest offline customers); recheck catches refunds fast. A single flat value would weld those opposing needs together. |
+| **Token lifetimes** | **7-day TTL / 14-day offline grace / daily recheck (local day-boundary, non-blocking)** | Decouples revocation lag (short TTL protects the seller) from outage tolerance (long grace protects honest offline customers). Daily recheck catches refunds within ~a day at negligible cost. Recheck fires on the first activation of a new local calendar day, in the background — it must never block editor startup. A single flat value would weld those opposing needs together. |
 
 ## 3. Identity model — one account, two front doors
 
@@ -55,7 +55,13 @@ The core design property: **web login and extension login converge on the same `
 1. Extension calls `vscode.authentication.getSession('github', ['user:email'], { createIfNone: true })` → gets a GitHub access token (VS Code's native UI handles consent; no password in the editor).
 2. Extension `POST /auth/github` with that token.
 3. Worker verifies the token against GitHub's API (`GET /user`, `GET /user/emails`), **upserts** the `users` row keyed by `github_id`, and returns the existing **Ed25519-signed entitlement token** with `sub = accountId` (+ `deviceId`), same 7/14/3 model.
-4. Extension stores the entitlement token in **SecretStorage** (bearer secret — never logged). `isPro()` checks it offline, revalidates ~every 3 days against `/auth/refresh` (the account-scoped successor to `/license/validate`).
+4. Extension stores the entitlement token in **SecretStorage** (bearer secret — never logged). `isPro()` checks it **offline and synchronously** against the cached token (no network — startup is never blocked). A background recheck against `/auth/refresh` (the account-scoped successor to `/license/validate`) fires **once per local calendar day**, on the first activation after the local date rolls over.
+
+### 3.1.1 Daily recheck — non-blocking, day-boundary
+- The extension stores `lastCheckDay` = the local `YYYY-MM-DD` of the last successful recheck.
+- On activation and on each periodic tick: if today's local date differs from `lastCheckDay`, run the recheck. Timezone is the machine's local clock (`Date`); nothing server-side is needed.
+- The recheck is **fire-and-forget after activation completes** (the existing `init().catch` pattern) — it must not be awaited in the activation path and must add **zero extra latency to editor startup**. A closed editor at midnight simply rechecks on the next new-day open; when offline, it relies on the 14-day grace and retries when next online.
+- Daily recheck sits comfortably inside the 7-day TTL, so an active daily user's token refreshes long before expiry and effectively never reaches grace.
 
 ### 3.2 Web sign-in flow
 1. User clicks "Sign in with GitHub" on the dashboard → Auth.js GitHub OAuth *web* flow.
@@ -146,7 +152,7 @@ Device limit (3) enforcement and the entitlement token contract are unchanged fr
 Two distinct auth contexts — deliberately not conflated:
 
 - **Web (browser):** HTTP-only + Secure + SameSite=Lax session cookie (never `localStorage`). CSRF tokens on state-changing actions (Auth.js), SameSite as backstop. "Log out everywhere" invalidates server-side. Short session with silent refresh.
-- **Extension:** the Ed25519 entitlement token in SecretStorage; 7-day TTL, 14-day offline grace, ~3-day recheck; a bearer secret, never logged.
+- **Extension:** the Ed25519 entitlement token in SecretStorage; 7-day TTL, 14-day offline grace, daily recheck (local day-boundary, non-blocking — see §3.1.1); a bearer secret, never logged.
 
 **Secrets inventory** (all Worker secrets, none committed):
 
