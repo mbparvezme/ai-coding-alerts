@@ -1,0 +1,30 @@
+{
+  "name": "ai-coding-alerts-web",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Unified accounts + licensing web app for AI Coding Alerts — Next.js on Cloudflare Workers, sharing the existing D1 database.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "next-auth": "^5.0.0-beta"
+  },
+  "devDependencies": {
+    "@opennextjs/cloudflare": "^1.0.0",
+    "@cloudflare/vitest-pool-workers": "^0.5.0",
+    "@cloudflare/workers-types": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "~2.0.0",
+    "wrangler": "^4.86.0"
+  }
+}
