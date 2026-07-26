@@ -63,6 +63,11 @@ The core design property: **web login and extension login converge on the same `
 - The recheck is **fire-and-forget after activation completes** (the existing `init().catch` pattern) — it must not be awaited in the activation path and must add **zero extra latency to editor startup**. A closed editor at midnight simply rechecks on the next new-day open; when offline, it relies on the 14-day grace and retries when next online.
 - Daily recheck sits comfortably inside the 7-day TTL, so an active daily user's token refreshes long before expiry and effectively never reaches grace.
 
+### 3.1.2 How `/auth/refresh` authenticates
+The daily recheck proves identity by **silently re-fetching the GitHub session token** — `vscode.authentication.getSession('github', ['user:email'], { createIfNone: false })`. VS Code caches the session, so this returns without any prompt or UI. The extension sends that token to `/auth/refresh`; the Worker re-verifies it against GitHub, re-resolves the `users` row, reads current subscription status, and returns a fresh entitlement token.
+- **Chosen over** a refresh-token scheme (presenting the current entitlement token to mint the next) because re-verifying against GitHub each time is the most robust: it self-heals if the GitHub link or subscription changes, and there is no separate refresh-token expiry edge to manage.
+- **If `getSession` returns nothing** (the user revoked the GitHub session): the recheck can't proceed silently → fall back to the offline grace window, and surface a re-sign-in prompt only when grace is near expiry (never block startup).
+
 ### 3.2 Web sign-in flow
 1. User clicks "Sign in with GitHub" on the dashboard → Auth.js GitHub OAuth *web* flow.
 2. On success, the same `users` upsert (same `github_id`), and an **HTTP-only, Secure, SameSite=Lax session cookie** is set (never a token in `localStorage`).
@@ -139,7 +144,7 @@ Verified **email**, **name**, **username/handle**, **avatar**, stable numeric **
 |---|---|
 | Auth.js GitHub routes | Web dashboard OAuth login + session cookies |
 | `POST /auth/github` | Extension: verify GitHub token → upsert user → return account-scoped entitlement token |
-| `POST /auth/refresh` | Extension periodic re-check (account-scoped successor to `/license/validate`); updates `devices.last_seen_at` |
+| `POST /auth/refresh` | Extension daily re-check (account-scoped successor to `/license/validate`); **authenticated by a silently re-fetched GitHub token** (see §3.1.2); re-verifies the account + subscription status, returns a fresh entitlement token, updates `devices.last_seen_at` |
 | `POST /auth/deactivate` | Free a device slot (account-scoped successor to `/license/deactivate`) |
 | `POST /webhooks/paddle` | Verify signature, dedupe by event id, link subscription to `custom_data.accountId`, store `paddle_customer_id`, update status |
 | Dashboard pages | Account, subscription (via Paddle customer portal), devices, settings backup, delete account |
