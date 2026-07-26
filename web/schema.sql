@@ -2,7 +2,7 @@
 -- Design: ../docs/superpowers/specs/2026-07-26-accounts-design.md (§5)
 
 CREATE TABLE users (
-  id                  TEXT PRIMARY KEY,        -- our account id, rides into Paddle custom_data
+  id                  TEXT PRIMARY KEY,        -- our account id; rides into Paddle custom_data
   github_id           INTEGER UNIQUE NOT NULL, -- stable GitHub numeric id (not username)
   email               TEXT,                    -- primary verified email from GitHub
   name                TEXT,

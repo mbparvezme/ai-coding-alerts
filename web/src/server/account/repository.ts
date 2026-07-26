@@ -58,7 +58,8 @@ export async function upsertUserByGithub(
       now
     )
     .first<UserRow>();
-  return row as UserRow;
+  if (!row) throw new Error("upsertUserByGithub: no row returned");
+  return row;
 }
 
 export async function getUserById(db: D1Database, id: string): Promise<UserRow | null> {
