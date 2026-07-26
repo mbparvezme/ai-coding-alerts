@@ -1,3 +1,5 @@
+import type { GithubIdentity } from "./github";
+
 export interface UserRow {
   id: string;
   github_id: number;
@@ -18,14 +20,6 @@ export interface SubscriptionRow {
   plan: string;
   created_at: number;
   updated_at: number;
-}
-
-export interface GithubIdentity {
-  githubId: number;
-  email: string | null;
-  name: string | null;
-  username: string | null;
-  avatarUrl: string | null;
 }
 
 export async function upsertUserByGithub(
