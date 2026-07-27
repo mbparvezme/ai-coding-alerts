@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { webcrypto } from "node:crypto";
 import { AccountService, type DayStore } from "../../src/license/AccountService";
-import type { SecretStore } from "../../src/license/LicenseService";
+import type { SecretStore } from "../../src/license/AccountService";
 import type { AuthProvider } from "../../src/license/githubSession";
 import type { FetchLike } from "../../src/license/api";
 import { localDayKey } from "../../src/license/recheck";

@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
-import { LicenseService } from "./LicenseService";
+import { AccountService, type DayStore } from "./AccountService";
+import { vscodeAuthProvider } from "./githubSession";
 import { getOrCreateDeviceId } from "./deviceId";
 import { requirePro } from "./requirePro";
 import { LICENSE_BASE_URL, LICENSE_PUBLIC_KEY_B64, PADDLE_CHECKOUT_URL } from "./constants";
@@ -11,10 +12,12 @@ const realFetch: FetchLike = async (url, init) => {
   return { status: res.status, json: () => res.json() };
 };
 
-export function createLicenseService(context: vscode.ExtensionContext): LicenseService {
+export function createAccountService(context: vscode.ExtensionContext): AccountService {
   const deviceId = getOrCreateDeviceId(context.globalState);
-  return new LicenseService({
+  return new AccountService({
     secrets: context.secrets,
+    dayStore: context.globalState as DayStore, // Memento's get/update satisfy DayStore
+    auth: vscodeAuthProvider(vscode.authentication),
     deviceId,
     baseUrl: LICENSE_BASE_URL,
     publicKeyB64: LICENSE_PUBLIC_KEY_B64,
@@ -25,35 +28,33 @@ export function createLicenseService(context: vscode.ExtensionContext): LicenseS
 
 function showUpsell(feature: string): void {
   void vscode.window
-    .showInformationMessage(`"${feature}" is an AI Coding Alerts Pro feature.`, "Upgrade")
+    .showInformationMessage(`"${feature}" is an AI Coding Alerts Pro feature.`, "Get Pro")
     .then((choice) => {
-      if (choice === "Upgrade") void vscode.env.openExternal(vscode.Uri.parse(PADDLE_CHECKOUT_URL));
+      if (choice === "Get Pro") void vscode.env.openExternal(vscode.Uri.parse(PADDLE_CHECKOUT_URL));
     });
 }
 
 export { requirePro, showUpsell };
 
-export function registerLicenseCommands(context: vscode.ExtensionContext, service: LicenseService): void {
+export function registerAccountCommands(context: vscode.ExtensionContext, service: AccountService): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand("aiCodingAlerts.enterLicense", async () => {
-      const key = await vscode.window.showInputBox({
-        prompt: "Paste your AI Coding Alerts Pro license key",
-        placeHolder: "ACA-XXXXX-XXXXX-XXXXX-XXXXX",
-        ignoreFocusOut: true
-      });
-      if (!key) return;
-      const result = await service.enterLicense(key);
-      if (result.ok) {
-        void vscode.window.showInformationMessage("AI Coding Alerts Pro is now active on this device. Thank you!");
-      } else {
-        void vscode.window.showErrorMessage(`Activation failed: ${result.message}`);
-      }
+    vscode.commands.registerCommand("aiCodingAlerts.signIn", async () => {
+      const r = await service.signIn();
+      if (r.ok) void vscode.window.showInformationMessage("Signed in — AI Coding Alerts Pro active on this device.");
+      else void vscode.window.showErrorMessage(r.message);
     }),
-    vscode.commands.registerCommand("aiCodingAlerts.manageLicense", async () => {
-      if (!service.hasKey()) {
-        const choice = await vscode.window.showInformationMessage("No Pro license on this device.", "Enter License", "Get Pro");
-        if (choice === "Enter License") void vscode.commands.executeCommand("aiCodingAlerts.enterLicense");
-        else if (choice === "Get Pro") void vscode.env.openExternal(vscode.Uri.parse(PADDLE_CHECKOUT_URL));
+    vscode.commands.registerCommand("aiCodingAlerts.upgrade", () => {
+      void vscode.env.openExternal(vscode.Uri.parse(PADDLE_CHECKOUT_URL));
+    }),
+    vscode.commands.registerCommand("aiCodingAlerts.manageAccount", async () => {
+      if (!service.isSignedIn()) {
+        const choice = await vscode.window.showInformationMessage(
+          "You're not signed in to AI Coding Alerts.",
+          "Sign in with GitHub",
+          "Get Pro"
+        );
+        if (choice === "Sign in with GitHub") void vscode.commands.executeCommand("aiCodingAlerts.signIn");
+        else if (choice === "Get Pro") void vscode.commands.executeCommand("aiCodingAlerts.upgrade");
         return;
       }
       const st = service.state();
@@ -62,17 +63,17 @@ export function registerLicenseCommands(context: vscode.ExtensionContext, servic
         `AI Coding Alerts Pro — ${label}.`,
         "Re-check now",
         "Deactivate this device",
-        "Remove license"
+        "Sign out"
       );
       if (choice === "Re-check now") {
-        const r = await service.revalidateNow();
-        void vscode.window.showInformationMessage(r.ok ? "License re-checked." : `Re-check: ${r.message}`);
+        const r = await service.recheckNow();
+        void vscode.window.showInformationMessage(r.ok ? "Account re-checked." : `Re-check: ${r.message}`);
       } else if (choice === "Deactivate this device") {
         const ok = await service.deactivateThisDevice();
-        void vscode.window.showInformationMessage(ok ? "This device was deactivated." : "Couldn't reach the server to deactivate.");
-      } else if (choice === "Remove license") {
-        await service.removeLicense();
-        void vscode.window.showInformationMessage("License removed from this device.");
+        void vscode.window.showInformationMessage(ok ? "This device was deactivated." : "Couldn't deactivate this device.");
+      } else if (choice === "Sign out") {
+        await service.signOut();
+        void vscode.window.showInformationMessage("Signed out on this device.");
       }
     })
   );

@@ -4,7 +4,13 @@ import { evaluateLicense, type LicenseState } from "./state";
 import { authGithub, refreshAuth, deactivateAccount, type AuthResult, type FetchLike } from "./api";
 import { localDayKey, shouldRecheckToday } from "./recheck";
 import type { AuthProvider } from "./githubSession";
-import type { SecretStore } from "./LicenseService";
+
+/** Matches vscode.SecretStorage (get/store/delete). */
+export interface SecretStore {
+  get(key: string): Thenable<string | undefined>;
+  store(key: string, value: string): Thenable<void>;
+  delete(key: string): Thenable<void>;
+}
 
 /** Matches vscode.Memento's get/update (used for the `lastCheckDay` string). */
 export interface DayStore {
