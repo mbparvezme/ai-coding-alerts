@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { env } from "cloudflare:test";
 import { applySchema } from "../helpers";
-import { upsertOnSignIn } from "../../src/auth";
+import { upsertOnSignIn } from "../../src/server/account/signIn";
 import * as repo from "../../src/server/account/repository";
 
 beforeEach(async () => {
