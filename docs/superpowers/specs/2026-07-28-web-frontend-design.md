@@ -47,6 +47,11 @@ page's entire job is comprehension → free install → upgrade.
   optionally borrowing one or two **Aceternity/Magic UI** motion effects on the hero. Chosen over
   shadcn/ui specifically to avoid the generic "stock template" look.
 - **Styling:** Tailwind CSS; theme tokens (below) as CSS variables so color is set once.
+- **Theming requirement (hard):** every brand color is defined in exactly **one place** — a single
+  set of CSS custom properties (e.g. `--color-primary`) wired into the Tailwind theme and HeroUI
+  theme config. Components reference the semantic token (`primary`, `secondary`, `accent`,
+  `success`, `surface`, …), **never a raw hex**. Changing the primary color anywhere in the app is
+  a one-line edit to that token. No hardcoded `#F59E0B` (or any brand hex) in component markup.
 - **Rendering:** landing page is static/server-rendered (fast first paint = conversion).
   Dashboard is a **protected server component** — reads the Auth.js session; unauthenticated
   visitors are redirected to sign-in.
