@@ -35,7 +35,9 @@ page's entire job is comprehension → free install → upgrade.
 - Multi-page marketing (blog, docs) — one page only for now
 - Building any billing UI we can hand to Paddle's customer portal (cancel/card/invoices)
 - Extension-side settings-sync wiring (that is sub-project #3; the dashboard shows read-only status until then)
-- Managed-bot (#4) and DIY two-way bot (#3) *implementation* — this site *markets* them, but **the site must not go live until #3/#4 exist**, or the copy overpromises.
+- Managed-bot (#4) and DIY two-way bot (#3) *implementation* — this site *markets* them. The
+  extension itself is already public (v0.7.0, one-way notifications), but **the site's copy must
+  not claim #3/#4 features until a version shipping them is published**, or it overpromises.
 
 ## 3. Architecture
 
@@ -150,7 +152,10 @@ A small read helper may be added to surface device/subscription rows to the dash
 These gate truthful copy; not needed to start the build, but required before the site goes live:
 - **(a) Which AI tools / events actually trigger an alert** — for the hero, features, FAQ, and SEO keywords.
 - **(b) Exactly what data leaves the machine** — for the privacy claims, which must be airtight.
-- **(c) Real Marketplace URL** — the "Add to VS Code" button is a placeholder until the extension is published.
+- **(c) Marketplace URL — RESOLVED.** Extension is already live (v0.7.0). Public install page:
+  `https://marketplace.visualstudio.com/items?itemName=mbparvezme.ai-coding-alerts`; the
+  "Add to VS Code" button uses this, optionally with the `vscode:extension/mbparvezme.ai-coding-alerts`
+  deep link for one-click install. (The publisher-management hub URL is private and not usable here.)
 
 ## 10. Error handling
 
@@ -176,7 +181,7 @@ These gate truthful copy; not needed to start the build, but required before the
 - Confirm the **price IDs are sandbox** (or provide sandbox equivalents).
 - **Paddle client-side token** (sandbox).
 - **Paddle customer-portal** link/config for the "Manage billing" button.
-- Later: Marketplace URL, the two content facts (§9).
+- Later: the two content facts (§9a, §9b).
 
 ## 13. Open decisions (none blocking)
 
