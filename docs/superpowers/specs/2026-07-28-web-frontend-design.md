@@ -29,7 +29,7 @@ page's entire job is comprehension → free install → upgrade.
 - GitHub sign-in surface (reuses the existing Auth.js config — already working)
 - Authenticated dashboard (5 cards: account, subscription, devices, settings-sync, sign-out)
 - **Inline Paddle checkout** wired with `custom_data.accountId`
-- Design system: HeroUI + Tailwind, dark-first, brand palette below
+- Design system: HeroUI v3 on Tailwind CSS v4, dark-first, brand palette below
 
 **Out of scope (later / other sub-projects)**
 - Multi-page marketing (blog, docs) — one page only for now
@@ -43,15 +43,19 @@ page's entire job is comprehension → free install → upgrade.
 
 - **Framework:** existing Next.js (App Router) app in `web/`, deployed to Cloudflare Workers
   via `@opennextjs/cloudflare`. No new backend — the six API routes and Auth.js session already exist.
-- **UI library:** **HeroUI** (Tailwind-native, distinctive look, accessible components we own),
-  optionally borrowing one or two **Aceternity/Magic UI** motion effects on the hero. Chosen over
-  shadcn/ui specifically to avoid the generic "stock template" look.
-- **Styling:** Tailwind CSS; theme tokens (below) as CSS variables so color is set once.
+- **UI library:** **HeroUI v3.2.2** (React Aria-based, built on Tailwind CSS v4; accessible
+  components we own), optionally borrowing one or two **Aceternity/Magic UI** motion effects on the
+  hero. Chosen over shadcn/ui specifically to avoid the generic "stock template" look.
+- **Styling:** **Tailwind CSS v4.3.0** (CSS-first — no `tailwind.config.js`; tokens live in CSS).
+  HeroUI v3 is fully CSS-variable-driven, so theming is native.
 - **Theming requirement (hard):** every brand color is defined in exactly **one place** — a single
-  set of CSS custom properties (e.g. `--color-primary`) wired into the Tailwind theme and HeroUI
-  theme config. Components reference the semantic token (`primary`, `secondary`, `accent`,
-  `success`, `surface`, …), **never a raw hex**. Changing the primary color anywhere in the app is
-  a one-line edit to that token. No hardcoded `#F59E0B` (or any brand hex) in component markup.
+  brand-token block of CSS custom properties in `globals.css` (`--brand-primary`, `--brand-secondary`,
+  `--brand-accent`, `--brand-success`, `--brand-ground`, `--brand-surface`, …). These are bridged to
+  Tailwind utilities via `@theme inline { --color-primary: var(--brand-primary); … }`, and HeroUI's
+  own semantic tokens (`--primary`, `--accent`, `--success`, `--background`, `--surface`, …) are
+  **remapped** to the same brand variables in that block. Components reference semantic tokens
+  (`bg-primary`, `text-muted`, …), **never a raw hex**. Changing the primary color app-wide is a
+  one-line edit to `--brand-primary`. No hardcoded `#F59E0B` (or any brand hex) in component markup.
 - **Rendering:** landing page is static/server-rendered (fast first paint = conversion).
   Dashboard is a **protected server component** — reads the Auth.js session; unauthenticated
   visitors are redirected to sign-in.
@@ -65,7 +69,8 @@ page's entire job is comprehension → free install → upgrade.
 
 ## 4. Design system
 
-- **Base:** HeroUI (+ Tailwind). Dark-first (library handles dark/light; we commit to dark).
+- **Base:** HeroUI v3.2.2 on Tailwind CSS v4.3.0 (CSS-first). Dark-first — the app is forced to the
+  dark theme for v1 (no theme toggle); `<html>` carries the dark class + `data-theme="dark"`.
 - **Palette**
   - Primary (brand + most CTAs): **Amber `#F59E0B`**
   - Secondary (from the extension icon): **Indigo `#5B5BE6`**
@@ -139,18 +144,21 @@ the webhook is the source of truth.)
 Server component; redirects to sign-in if no session. Five parts:
 
 1. **Account header** — avatar + GitHub name/email + a **Free / Pro** badge (from subscription state).
-2. **Subscription card** — status, plan, renewal/expiry.
+2. **Subscription card** — status + plan. (Exact renewal date and invoices live in the Paddle
+   portal — the `subscriptions` schema stores no billing dates.)
    - Free → **"Upgrade to Pro"** (routes to pricing/checkout).
    - Pro → **"Manage billing"** → **Paddle customer portal** (cancel, update card, invoices — hosted by Paddle, we build none of it).
 3. **Devices card** — lists active devices (≤3) with last-seen; **Deactivate** per device
-   (calls existing `POST /api/auth/deactivate`) so users can free a slot at the 3-device limit.
-4. **Settings-sync card** — last backup time + restore action (the free carrot), reading
-   `GET /api/settings-backup`. Read-only status until extension wiring lands in #3.
+   (a session-authed server action calling `deleteDevice`) so users can free a slot at the 3-device limit.
+4. **Settings-sync card** — last backup time + size, **read-only** (proves the free carrot works).
+   Restore happens in the extension (sub-project #3), not the web dashboard.
 5. **Sign out.**
 
-Backend endpoints consumed (all already exist): `auth()` session, subscription/device/backup
-reads via the account repository, `POST /api/auth/deactivate`, `GET/PUT /api/settings-backup`.
-A small read helper may be added to surface device/subscription rows to the dashboard.
+**Data access:** the dashboard is **session-authed** (Auth.js `session.accountId`), *not*
+GitHub-token authed, so it does **not** reuse the extension's `/api/auth/*` routes (those verify a
+GitHub token). It reads through the account repository (adding two helpers: `listDevices` and
+`getSettingsBackupMeta`) and mutates through **server actions** (`deactivateDeviceAction`,
+`signOutAction`) that authorize on `session.accountId`.
 
 ## 9. Content facts to confirm (before copy is finalized)
 
@@ -173,13 +181,21 @@ These gate truthful copy; not needed to start the build, but required before the
 
 ## 11. Testing
 
-- **Component/unit:** section and card components render expected states (free vs pro, empty devices, no backup) via the existing Vitest setup.
-- **Checkout wiring:** unit-test that `InlineCheckout` is invoked with the correct `priceId` and
-  `customData.accountId` from the session (mock Paddle.js — do not hit Paddle in tests).
-- **Dashboard gating:** unauthenticated request to `/account` redirects to sign-in.
+- **Test strategy:** the existing Vitest runs in the Cloudflare **Workers pool** (no DOM). React
+  component tests need a **jsdom** environment, so we add a **second Vitest project** (jsdom +
+  `@testing-library/react`) alongside the Workers project (kept for `src/server/**` and the new
+  repository helpers). Both run under `npm test`.
+- **Favor pure logic over rendering:** extract testable logic into pure modules (checkout-option
+  builder, plan/label formatters, device/backup mappers, dashboard-banner state) and unit-test
+  those; keep components thin. This gives high-ROI tests without fighting RSC/HeroUI in jsdom.
+- **Checkout wiring:** unit-test the pure `buildCheckoutOptions({ priceId, accountId, email })`
+  returns the correct `items` / `customData.accountId` / inline `settings` (mock Paddle.js — never hit Paddle in tests).
+- **Dashboard data layer:** Workers-pool tests (real Miniflare D1) for `listDevices`,
+  `getSettingsBackupMeta`, and the `getDashboardData` composition.
+- **Dashboard gating:** unit-test the guard helper (no session → redirect signal).
 - **Manual sandbox E2E** (from the deployment checklist): real sandbox purchase → webhook →
-  `subscriptions` row → dashboard flips to Pro; device deactivate; settings backup round-trip.
-- Keep the existing 34 web tests green; typecheck clean.
+  `subscriptions` row → dashboard flips to Pro; device deactivate; settings-backup meta shows.
+- Keep the existing 34 web tests green; typecheck clean; `npm run build` succeeds (OpenNext).
 
 ## 12. Inputs still needed from the user
 
