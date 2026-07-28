@@ -77,7 +77,7 @@ Stand up Tailwind v4 + HeroUI v3, the single brand-token block, forced-dark prov
 - Test: `web/src/app/theme-smoke.ui.test.tsx`
 
 **Interfaces:**
-- Produces: brand tokens (`--brand-primary` … in `globals.css`); Tailwind utilities `bg-primary`, `text-primary`, `bg-ground`, `bg-surface`, `text-muted`, `border-border`, `text-accent`, `text-success`; a jsdom Vitest project keyed on `*.ui.test.ts(x)`.
+- Produces: brand tokens (`--brand-primary` … in `globals.css`); Tailwind utilities `bg-primary`, `text-primary`, `bg-ground`, `bg-surface`, `text-muted`, `border-border`, `text-urgent`, `text-success`; a jsdom Vitest project keyed on `*.ui.test.ts(x)`.
 
 - [ ] **Step 1: Install dependencies**
 
@@ -558,7 +558,7 @@ export function Hero() {
       <h1 className="text-4xl font-bold tracking-tight text-text sm:text-5xl">{COPY.hero.headline}</h1>
       <p className="mt-6 text-lg text-muted">{COPY.hero.subhead}</p>
       <div className="mt-10 flex items-center justify-center gap-4">
-        <Button as="a" href={MARKETPLACE_URL} color="primary" size="lg">
+        <Button as="a" href={MARKETPLACE_URL} variant="primary" size="lg">
           Add to VS Code — Free
         </Button>
         <a href="#pricing" className="text-sm text-muted hover:text-text">See Pricing ↓</a>
@@ -584,7 +584,7 @@ export function Nav({ signedIn }: { signedIn: boolean }) {
       <div className="flex items-center gap-4 text-sm">
         <a href="#features" className="text-muted hover:text-text">Features</a>
         <a href="#pricing" className="text-muted hover:text-text">Pricing</a>
-        <Button as="a" href={MARKETPLACE_URL} color="primary" size="sm">Add to VS Code — Free</Button>
+        <Button as="a" href={MARKETPLACE_URL} variant="primary" size="sm">Add to VS Code — Free</Button>
         {signedIn ? (
           <a href="/account" className="text-muted hover:text-text">Dashboard</a>
         ) : (
@@ -635,7 +635,7 @@ export function HowItWorks() {
       <div className="mt-10 grid gap-6 sm:grid-cols-3">
         {STEPS.map((s) => (
           <div key={s.n} className="rounded-2xl border border-border bg-surface p-6">
-            <div className="text-accent font-mono text-sm">{s.n}</div>
+            <div className="text-urgent font-mono text-sm">{s.n}</div>
             <div className="mt-2 font-medium text-text">{s.t}</div>
             <p className="mt-2 text-sm text-muted">{s.d}</p>
           </div>
@@ -753,7 +753,7 @@ export function FinalCta() {
       <h2 className="text-3xl font-semibold text-text">Get back to the interesting part.</h2>
       <p className="mt-4 text-muted">Let the agent do the work. Let your phone do the watching.</p>
       <div className="mt-8">
-        <Button as="a" href={MARKETPLACE_URL} color="primary" size="lg">Add to VS Code — Free</Button>
+        <Button as="a" href={MARKETPLACE_URL} variant="primary" size="lg">Add to VS Code — Free</Button>
       </div>
     </section>
   );
@@ -911,7 +911,7 @@ export function InlineCheckout({
 
   return (
     <div>
-      {error ? <p className="text-accent text-sm">{error}</p> : null}
+      {error ? <p className="text-urgent text-sm">{error}</p> : null}
       <div className="checkout-container min-h-[450px]" />
     </div>
   );
@@ -944,7 +944,7 @@ export function Pricing({ accountId, email }: { accountId: string | null; email:
       {plans.map((p) => (
         <div key={p.key} className="rounded-2xl border border-border bg-surface p-8">
           {"badge" in p && p.badge ? (
-            <span className="rounded-full bg-accent px-2 py-0.5 text-xs text-white">{p.badge}</span>
+            <span className="rounded-full bg-urgent px-2 py-0.5 text-xs text-white">{p.badge}</span>
           ) : null}
           <div className="mt-3 flex items-baseline gap-1">
             <span className="text-4xl font-bold text-text">{p.price}</span>
@@ -953,12 +953,12 @@ export function Pricing({ accountId, email }: { accountId: string | null; email:
           <p className="mt-3 text-muted">{p.valueLine}</p>
           <div className="mt-6">
             {accountId ? (
-              <Button color="primary" className="w-full" onPress={() => setActive(p.priceId)}>
+              <Button variant="primary" className="w-full" onPress={() => setActive(p.priceId)}>
                 Start Pro
               </Button>
             ) : (
               <form action={() => signInWithGithub("/#pricing")}>
-                <Button type="submit" color="primary" className="w-full">Sign in to Start Pro</Button>
+                <Button type="submit" variant="primary" className="w-full">Sign in to Start Pro</Button>
               </form>
             )}
           </div>
@@ -1331,13 +1331,13 @@ export function SubscriptionCard({ subscription }: { subscription: SubscriptionR
             <span className="text-success">{subscription!.status}</span>
           </p>
           <form action={openBillingPortalAction} className="mt-4">
-            <Button type="submit" variant="bordered">Manage billing</Button>
+            <Button type="submit" variant="outline">Manage billing</Button>
           </form>
         </>
       ) : (
         <>
           <p className="mt-2 text-sm text-muted">You&apos;re on the free plan.</p>
-          <Button as="a" href="/#pricing" color="primary" className="mt-4">Upgrade to Pro</Button>
+          <Button as="a" href="/#pricing" variant="primary" className="mt-4">Upgrade to Pro</Button>
         </>
       )}
     </div>
@@ -1367,7 +1367,7 @@ export function DevicesCard({ devices }: { devices: DeviceRow[] }) {
                 <div className="text-xs text-muted">last seen {new Date(d.last_seen_at).toLocaleDateString()}</div>
               </div>
               <form action={deactivateDeviceAction.bind(null, d.device_id)}>
-                <Button type="submit" size="sm" variant="bordered">Deactivate</Button>
+                <Button type="submit" size="sm" variant="outline">Deactivate</Button>
               </form>
             </li>
           ))}
@@ -1404,7 +1404,7 @@ import { signOutAction } from "@/app/auth-actions";
 export function SignOutButton() {
   return (
     <form action={signOutAction}>
-      <Button type="submit" variant="light">Sign out</Button>
+      <Button type="submit" variant="ghost">Sign out</Button>
     </form>
   );
 }
@@ -1431,7 +1431,7 @@ export function ActivatingBanner() {
   }, [router]);
 
   return (
-    <div className="rounded-2xl border border-accent/40 bg-surface p-4 text-sm text-muted">
+    <div className="rounded-2xl border border-urgent/40 bg-surface p-4 text-sm text-muted">
       Payment received — activating your Pro subscription… this can take a few seconds.
     </div>
   );
