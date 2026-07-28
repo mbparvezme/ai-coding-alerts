@@ -1,0 +1,61 @@
+# Deploy the web/ backend (Next.js on Cloudflare Workers) automatically.
+#
+# Triggers:
+#   - push to main that touches web/  -> deploy
+#   - manual "Run workflow" button    -> deploy on demand (workflow_dispatch)
+#
+# REQUIRED GitHub repository secrets (Settings -> Secrets and variables -> Actions):
+#   CLOUDFLARE_API_TOKEN   - create in Cloudflare with the "Edit Cloudflare Workers" token template
+#   CLOUDFLARE_ACCOUNT_ID  - your Cloudflare account id (dashboard sidebar, or `npx wrangler whoami`)
+#
+# NOTE: This workflow only ships CODE. Your Worker's runtime secrets
+# (LICENSE_SIGNING_PRIVATE_KEY, PADDLE_WEBHOOK_SECRET, AUTH_SECRET,
+# GITHUB_OAUTH_CLIENT_ID, GITHUB_OAUTH_CLIENT_SECRET) are set ONCE in Cloudflare
+# with `wrangler secret put` and are NOT part of this file. Never put them here.
+
+name: Deploy backend to Cloudflare
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never let two deploys run at once; let an in-flight deploy finish rather than cancel it.
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: build & deploy Worker
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      # Safety gate: don't deploy a broken build.
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Tests (Vitest / Miniflare)
+        run: npm test
+      # `npm run deploy` = opennextjs-cloudflare build && deploy.
+      # wrangler (invoked underneath) reads CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID from env.
+      - name: Build & deploy
+        run: npm run deploy
