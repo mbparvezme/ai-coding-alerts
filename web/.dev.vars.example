@@ -1,9 +1,10 @@
 # Local secrets for `wrangler dev` / `next dev`. Copy this file to `.dev.vars` (gitignored) and fill in.
 # In production these are set with `wrangler secret put <NAME>`.
 
-PADDLE_WEBHOOK_SECRET=
 LICENSE_SIGNING_PRIVATE_KEY=
+AUTH_SECRET=
 GITHUB_OAUTH_CLIENT_ID=
 GITHUB_OAUTH_CLIENT_SECRET=
-AUTH_SECRET=
+PADDLE_WEBHOOK_SECRET=
+
 # Alternative to setting trustHost: true in code: AUTH_TRUST_HOST=true
