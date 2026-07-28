@@ -17,7 +17,12 @@ export async function handleWebhook(request: Request, deps: WebhookDeps): Promis
     return Response.json({ ok: false, error: "bad_signature" }, { status: 401 });
   }
 
-  const body = JSON.parse(raw) as unknown;
+  let body: unknown;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return Response.json({ ok: true, ignored: true }, { status: 200 });
+  }
   const evt = parsePaddleEvent(body);
   if (!evt) {
     return Response.json({ ok: true, ignored: true }, { status: 200 });

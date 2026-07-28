@@ -136,6 +136,27 @@ test("network error on recheck keeps the token (grace) and does not advance the 
   assert.equal(day.current(), "2000-01-01"); // NOT advanced -> retry next start
 });
 
+test("transient github_auth on recheck keeps the token (grace) and does not advance the day", async () => {
+  const { pair, publicB64 } = await keypair();
+  const nowSec = 1_700_000_000, nowMs = nowSec * 1000 + 1000;
+  const active = await mint(pair, nowSec);
+  const day = memDay();
+  const auth: AuthProvider = { getSession: async () => ({ accessToken: "gho_x" }) };
+  let call = 0;
+  const fetchImpl: FetchLike = async () => {
+    call++;
+    if (call === 1) return { status: 200, json: async () => ({ ok: true, token: active, status: "active", plan: "monthly" }) };
+    return { status: 401, json: async () => ({ ok: false, error: "github_auth" }) };
+  };
+  const svc = make({ publicB64, fetchImpl, now: () => nowMs, auth, dayStore: day.store });
+  await svc.init();
+  await svc.signIn();
+  await day.store.update("k", "2000-01-01"); // force a new day
+  await svc.recheckIfNewDay();
+  assert.equal(svc.isPro(), true);          // grace kept (transient GitHub outage)
+  assert.equal(day.current(), "2000-01-01"); // NOT advanced -> retry next start
+});
+
 test("silent recheck with no GitHub session keeps the token and does not advance the day", async () => {
   const { pair, publicB64 } = await keypair();
   const nowSec = 1_700_000_000, nowMs = nowSec * 1000 + 1000;

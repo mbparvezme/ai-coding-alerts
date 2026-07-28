@@ -104,13 +104,14 @@ export class AccountService {
       await this.markCheckedToday();
       return r;
     }
-    if (r.code === "no_account" || r.code === "github_auth") {
-      // Definitive server verdict: stop honoring the cached token.
+    if (r.code === "no_account") {
+      // Definitive server verdict: the account no longer exists — stop honoring the cached token.
       await this.clearToken();
       await this.markCheckedToday();
       return r;
     }
-    // network/server errors are transient: keep the cached token, do NOT advance the day.
+    // github_auth / network / server are transient (GitHub blip, offline, 5xx): keep the cached
+    // token so the 14-day offline grace applies, and do NOT advance the day (retry next start).
     return r;
   }
 

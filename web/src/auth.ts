@@ -14,6 +14,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
   // is configured explicitly from those instead of relying on auto-detection.
   const { env } = getCloudflareContext();
   return {
+    trustHost: true,
     session: { strategy: "jwt" },
     providers: [GitHub({ clientId: env.GITHUB_OAUTH_CLIENT_ID, clientSecret: env.GITHUB_OAUTH_CLIENT_SECRET })],
     callbacks: {

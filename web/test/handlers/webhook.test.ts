@@ -40,4 +40,13 @@ describe("handleWebhook", () => {
     const res = await handleWebhook(await post(evt("evt_3", "subscription.activated", "active"), "wrong_secret", 1000), { ...deps, db: env.DB });
     expect(res.status).toBe(401);
   });
+
+  it("returns 200 ignored on a signed but non-JSON body", async () => {
+    const raw = "not json";
+    const sig = await signBody(raw, "whsec_test", 1000);
+    const req = new Request("http://t/webhooks/paddle", { method: "POST", headers: { "Paddle-Signature": sig }, body: raw });
+    const res = await handleWebhook(req, { ...deps, db: env.DB });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, ignored: true });
+  });
 });
