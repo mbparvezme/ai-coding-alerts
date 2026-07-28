@@ -22,6 +22,7 @@ import { HistoryPanel } from "./views/HistoryPanel";
 import { DashboardPanel } from "./views/DashboardPanel";
 import { HookInstaller } from "./setup/HookInstaller";
 import { buildHealthReport } from "./health/healthReport";
+import { createAccountService, registerAccountCommands } from "./license/wire";
 
 const HOOKS_PROMPT_DISMISSED = "aiCodingAlerts.hooksPromptDismissed";
 const HOOKS_GUIDE_URL = "https://github.com/mbparvezme/ai-coding-alerts#claude-code-hooks";
@@ -166,6 +167,13 @@ export function activate(context: vscode.ExtensionContext): void {
   };
   updateMuteStatus();
   muteStatus.show();
+
+  const account = createAccountService(context);
+  registerAccountCommands(context, account);
+  void account
+    .init()
+    .then(() => { void account.recheckIfNewDay(); }) // fire-and-forget; never blocks activation
+    .catch((e) => output.appendLine(`Account init skipped: ${String(e)}`));
 
   context.subscriptions.push(
     output,

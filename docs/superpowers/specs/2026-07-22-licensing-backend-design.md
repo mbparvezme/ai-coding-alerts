@@ -25,6 +25,14 @@ Premium features that will *later* consume this system (not built here): remote 
 | Backend stack | **Cloudflare Workers + D1** | Serverless, cheap, global, SQL; extends cleanly to the later push relay / cloud sync |
 | Enforcement | **Soft gate** (client checks a signed token) for now | A determined user can patch it out; acceptable at launch. Hard-gated features come later via server-side relay. |
 
+### 2.1 Why license keys, not user accounts
+
+The product is a **single-tier, offline-capable, locally-running** extension. Its entire job runs on the developer's machine — there is no server-side per-user data to log into. So we sell a **binary Pro entitlement** proved by a signed token, not an identity.
+
+Rejected: a **user-account/auth app** (signup, email verification, password/OTP, sessions, reset/recovery). It would multiply the backend surface (5 endpoints → also signup/login/verify/reset/session), force us to custody password hashes + PII (a breach target), and put a login modal inside the editor with sessions that expire mid-flight — exactly the friction the offline token design avoids. Accounts only earn their cost when the account *is* the product (team seats, a web dashboard, cross-device synced server state) — none of which v1 has.
+
+**Migration stays open (confirmed):** `licenses` already carries `email` + `paddle_customer_id`. Adding accounts later = a new `users` table linked by `paddle_customer_id`; the license/activation/token machinery is untouched. Choosing keys now does not foreclose the account model later.
+
 ## 3. Architecture
 
 ```
@@ -95,6 +103,23 @@ Random, unguessable (e.g. `crypto.randomUUID()` twice, or a 32+ char base32 stri
 - `LICENSE_SIGNING_PRIVATE_KEY` — to sign tokens.
 - (D1 binding configured in `wrangler.toml`.)
 
+### 4.7 Key delivery seam (`KeyDeliverer`)
+Provider is decided (**Cloudflare Email Sending**, on the Workers Paid plan), but activation is
+**deferred** because there is no sending domain yet (§10). The webhook is built against an
+injectable seam, matching the extension's DI style (cf. `TelegramNotifier`'s injected `send`).
+
+- Interface: `KeyDeliverer = (email: string, licenseKey: string) => Promise<void>`.
+- **v1 default implementation: no-op** (optionally logs). The success page (`GET /license?txn=`)
+  is the actual delivery channel in v1, so v1 ships and works with no domain.
+- The webhook calls `deliver(email, key)` after minting a key on `subscription.created`.
+- **`CloudflareEmailDeliverer` is implemented and unit-tested now** — it takes an injected
+  `send_email` sender, so the test uses a fake and needs no real domain. It is simply not wired
+  into the webhook (default stays no-op) until a domain exists.
+- Placeholder `From:` is `licenses@aicodingalert.com` (changeable at deployment).
+- **Turning email on later** = register/verify the domain on Cloudflare (auto DKIM/SPF) → add the
+  `send_email` binding in `wrangler.toml` → swap the default deliverer to `CloudflareEmailDeliverer`.
+  No new logic. First 3,000 emails/month are free on the paid plan.
+
 ## 5. Extension side (`src/license/`)
 
 Consumer of the backend. Kept separate from the alert pipeline.
@@ -129,7 +154,8 @@ Consumer of the backend. Kept separate from the alert pipeline.
 
 ## 8. Out of scope (YAGNI for this sub-project)
 
-- Email delivery of keys (success page shows it; add email later).
+- Email *delivery* of keys — the `KeyDeliverer` seam (§4.7) is built and wired but defaults to a
+  no-op; the success page shows the key. A real email sender is a later drop-in (needs a domain).
 - Trials, accounts/login (key-based only).
 - Refund UI (Paddle handles it).
 - The premium features themselves — they only consume `isPro()`/`requirePro()`.
@@ -142,13 +168,18 @@ Consumer of the backend. Kept separate from the alert pipeline.
 3. Decide the **price points** (monthly / yearly) and the **device limit** (default 3).
 4. Generate the **Ed25519 keypair** (private → Worker secret, public → extension constant).
 
-## 10. Open decisions to confirm before/at planning
+## 10. Confirmed decisions (locked at planning, 2026-07-22)
 
-- Monthly & yearly **price** amounts.
-- **Device limit** (default 3 — confirm).
-- Token **TTL** (7 days) and **grace window** (14 days) — confirm.
-- Whether to add **email delivery** of the key in v1 (default: no, success page only).
-- Final **endpoint host/domain** for the Worker.
+| Decision | Value |
+|---|---|
+| Monthly / yearly **price** | **$3.89 / month**, **$36 / year** (create in Paddle **sandbox** first) |
+| **Device limit** | **3** (`licenses.device_limit` default) |
+| Token **TTL** | **7 days** |
+| Offline **grace window** | **14 days** |
+| **Email delivery** in v1 | Provider = **Cloudflare Email Sending** (Workers Paid plan; first 3k/mo free). Seam (§4.7) built; `CloudflareEmailDeliverer` implemented + unit-tested but **not wired** — default is no-op and the success page delivers the key. Activation deferred until a **sending domain** exists (none yet). |
+| **Device add-ons** | Not in v1. Flat **3 devices**. Kept add-on-ready: the webhook sets `device_limit` via a single "resolve plan device limit" function, so tiered devices are a later extension of that function + tests — no schema/activation change. |
+| Worker **host/domain** | Placeholder **`https://aicodingalert.com`** baked into the extension as the backend base-URL constant. **Changeable at deployment** (may point at a `workers.dev` subdomain or the real domain once registered). |
+| Email **From** address | Placeholder **`licenses@aicodingalert.com`**. Same domain; changeable at deployment. Real sending stays disabled (no-op deliverer) until the domain is registered + verified on Cloudflare. |
 
 ## 11. Resources (verify against live docs — versions move)
 

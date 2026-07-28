@@ -1,0 +1,21 @@
+# Cloudflare Worker config for the unified AI Coding Alerts accounts/licensing web app.
+# Design: ../docs/superpowers/specs/2026-07-26-accounts-design.md
+
+name = "ai-coding-alerts-web"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+main = ".open-next/worker.js"
+
+# D1 database — shared with the existing `server/` Worker.
+[[d1_databases]]
+binding = "DB"
+database_name = "ai-coding-alerts"
+database_id = "REPLACE_WITH_D1_ID"
+
+# Secrets (never commit values). Set with:
+#   wrangler secret put PADDLE_WEBHOOK_SECRET
+#   wrangler secret put LICENSE_SIGNING_PRIVATE_KEY
+#   wrangler secret put GITHUB_OAUTH_CLIENT_ID
+#   wrangler secret put GITHUB_OAUTH_CLIENT_SECRET
+#   wrangler secret put AUTH_SECRET
+# For local dev, put them in .dev.vars (gitignored) — see .dev.vars.example.
