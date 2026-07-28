@@ -13,7 +13,7 @@
   --brand-primary: #f59e0b;
   --brand-primary-foreground: #1a1200;
   --brand-secondary: #5b5be6;
-  --brand-accent: #ff4d2e; /* vermilion — reserved for sparing urgency use; see note below */
+  --brand-urgent: #ff4d2e; /* vermilion — reserved for sparing urgency use; see note below */
   --brand-success: #10b981;
   --brand-ground: #0b0b12;
   --brand-surface: #16161f;
@@ -31,8 +31,13 @@
      (see @heroui/styles/dist/components/button/button.styles.js: defaultVariants.variant =
      "primary" -> .button--primary { --button-bg: var(--accent) }), so --accent IS the
      brand-primary slot in v3's naming, and --accent-foreground is its foreground pair.
-     There is no second "urgency" color slot, so --brand-accent (vermilion) is kept only as a
-     raw primitive for now (not wired into a HeroUI token) — see @theme inline below. */
+     IMPORTANT — "accent" vs "urgent": HeroUI's own theme.css derives --color-accent
+     (the text-accent/bg-accent Tailwind utilities) directly from --accent, so once --accent
+     is remapped to --brand-primary below, `accent` means HeroUI-primary/amber everywhere,
+     including the Tailwind utilities. There is no second HeroUI token for a distinct
+     "urgency" color, so the vermilion primitive is named --brand-urgent (not --brand-accent)
+     to avoid colliding with that meaning, and is bridged to its own `urgent` Tailwind utility
+     in the @theme inline block below — NOT wired into any HeroUI semantic token. */
   --background: var(--brand-ground);
   --foreground: var(--brand-text);
   --surface: var(--brand-surface);
@@ -58,6 +63,9 @@
   --color-secondary: var(--brand-secondary);
   --color-ground: var(--brand-ground);
   --color-text: var(--brand-text);
+  /* Vermilion urgency utility. HeroUI has no urgency token, so text-urgent/bg-urgent/
+     border-urgent exist only because of this bridge (accent utilities render amber). */
+  --color-urgent: var(--brand-urgent);
 }
 
 html, body {
