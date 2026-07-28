@@ -198,3 +198,29 @@ export async function recordProcessedEvent(db: D1Database, eventId: string, now:
     .bind(eventId, now)
     .run();
 }
+
+export interface DeviceRow {
+  user_id: string;
+  device_id: string;
+  activated_at: number;
+  last_seen_at: number;
+}
+
+export async function listDevices(db: D1Database, userId: string): Promise<DeviceRow[]> {
+  const res = await db
+    .prepare("SELECT * FROM devices WHERE user_id = ? ORDER BY last_seen_at DESC")
+    .bind(userId)
+    .all<DeviceRow>();
+  return res.results ?? [];
+}
+
+export async function getSettingsBackupMeta(
+  db: D1Database,
+  userId: string
+): Promise<{ updatedAt: number; bytes: number } | null> {
+  const row = await db
+    .prepare("SELECT updated_at AS updatedAt, length(blob) AS bytes FROM settings_backups WHERE user_id = ?")
+    .bind(userId)
+    .first<{ updatedAt: number; bytes: number }>();
+  return row ?? null;
+}
