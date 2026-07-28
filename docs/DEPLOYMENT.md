@@ -1,5 +1,7 @@
 # Deploying the AI Coding Alerts Licensing Backend to Cloudflare
 
+> **Note (2026-07):** The v1 licensing Worker in `server/` has been retired and replaced by the unified Next.js-on-Cloudflare app in `web/`. Sections below that reference `server/…` paths are historical and will be rewritten in the accounts dashboard sub-project. For the current backend, see `web/`.
+
 A complete, step-by-step guide. It assumes **no prior Cloudflare or Paddle experience** — just that you can open a terminal and copy/paste commands.
 
 **Time needed:** ~45–60 minutes the first time.

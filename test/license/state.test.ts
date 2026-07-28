@@ -29,7 +29,7 @@ test("past grace -> not pro, mode expired", () => {
   assert.equal(s.mode, "expired");
 });
 
-test("inactive status -> not pro, mode inactive, wants revalidation", () => {
+test("inactive status -> not pro, mode inactive", () => {
   const s = evaluateLicense({ ...base, status: "canceled" }, iatMs + 1000);
   assert.deepEqual(s, { pro: false, mode: "inactive" });
 });
