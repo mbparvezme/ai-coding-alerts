@@ -3,6 +3,7 @@
 import { Button } from "@heroui/react";
 import { buttonVariants } from "@heroui/styles";
 import type { SubscriptionRow } from "@/server/account/repository";
+import { openBillingPortalAction } from "@/app/(dashboard)/account/actions";
 
 export function SubscriptionCard({ subscription }: { subscription: SubscriptionRow | null }) {
   const isPro = subscription?.status === "active";
@@ -15,8 +16,9 @@ export function SubscriptionCard({ subscription }: { subscription: SubscriptionR
             Plan: <span className="text-text">{subscription!.plan}</span> · Status:{" "}
             <span className="text-success">{subscription!.status}</span>
           </p>
-          {/* TODO(Task 7): wrap in <form action={openBillingPortalAction}> once billing portal lands */}
-          <Button type="submit" variant="outline" isDisabled className="mt-4">Manage billing</Button>
+          <form action={openBillingPortalAction} className="mt-4">
+            <Button type="submit" variant="outline">Manage billing</Button>
+          </form>
         </>
       ) : (
         <>

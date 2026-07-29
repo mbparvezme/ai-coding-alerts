@@ -5,4 +5,5 @@ export interface AccountEnv {
   GITHUB_OAUTH_CLIENT_ID: string;
   GITHUB_OAUTH_CLIENT_SECRET: string;
   AUTH_SECRET: string;
+  PADDLE_API_KEY: string;
 }

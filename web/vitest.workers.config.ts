@@ -16,6 +16,7 @@ export default defineWorkersConfig({
           bindings: {
             PADDLE_WEBHOOK_SECRET: "whsec_test",
             LICENSE_SIGNING_PRIVATE_KEY: "TEST_ONLY_REPLACED_AT_RUNTIME",
+            PADDLE_API_KEY: "pdl_test",
           },
         },
       },

@@ -1,4 +1,10 @@
 import { render, screen } from "@testing-library/react";
+import { vi } from "vitest";
+
+vi.mock("@/app/(dashboard)/account/actions", () => ({
+  openBillingPortalAction: () => {},
+}));
+
 import { SubscriptionCard } from "./SubscriptionCard";
 
 test("free account shows Upgrade to Pro", () => {
