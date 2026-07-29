@@ -17,3 +17,8 @@ test("pro account shows the plan and Manage billing", () => {
   expect(screen.getByText(/yearly/i)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /manage billing/i })).toBeInTheDocument();
 });
+
+test("past_due account still shows Manage billing (so they can fix payment)", () => {
+  render(<SubscriptionCard subscription={{ paddle_subscription_id: "sub_2", user_id: "acct_1", status: "past_due", plan: "monthly", created_at: 1, updated_at: 1 }} />);
+  expect(screen.getByRole("button", { name: /manage billing/i })).toBeInTheDocument();
+});

@@ -30,6 +30,7 @@ export async function openBillingPortalAction(): Promise<void> {
     (env as any).PADDLE_API_KEY as string
   );
   const res = await fetch(url, init);
+  if (!res.ok) redirect("/account"); // Paddle portal-session failed → return to dashboard, not a raw error
   const portalUrl = parsePortalSessionResponse(await res.json());
   redirect(portalUrl);
 }

@@ -6,16 +6,18 @@ import type { SubscriptionRow } from "@/server/account/repository";
 import { openBillingPortalAction } from "@/app/(dashboard)/account/actions";
 
 export function SubscriptionCard({ subscription }: { subscription: SubscriptionRow | null }) {
-  const isPro = subscription?.status === "active";
+  const isActive = subscription?.status === "active";
   return (
     <div className="rounded-2xl border border-border bg-surface p-6">
       <div className="font-medium text-text">Subscription</div>
-      {isPro ? (
+      {subscription ? (
         <>
           <p className="mt-2 text-sm text-muted">
-            Plan: <span className="text-text">{subscription!.plan}</span> · Status:{" "}
-            <span className="text-success">{subscription!.status}</span>
+            Plan: <span className="text-text">{subscription.plan}</span> · Status:{" "}
+            <span className={isActive ? "text-success" : "text-urgent"}>{subscription.status}</span>
           </p>
+          {/* Show billing management for any subscription row (incl. past_due) so a
+              failed-renewal customer can reach the Paddle portal to fix payment. */}
           <form action={openBillingPortalAction} className="mt-4">
             <Button type="submit" variant="outline">Manage billing</Button>
           </form>

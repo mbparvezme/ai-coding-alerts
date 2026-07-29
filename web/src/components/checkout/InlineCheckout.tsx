@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { initializePaddle, type Paddle } from "@paddle/paddle-js";
+import { useEffect, useState } from "react";
+import { initializePaddle } from "@paddle/paddle-js";
 import { useRouter } from "next/navigation";
 import { buildCheckoutOptions } from "@/checkout/options";
 import { getPaddleEnv, getPaddleClientToken } from "@/config/paddle";
@@ -16,7 +16,6 @@ export function InlineCheckout({
   email: string | null;
 }) {
   const router = useRouter();
-  const paddleRef = useRef<Paddle | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,7 +29,6 @@ export function InlineCheckout({
     })
       .then((paddle) => {
         if (cancelled || !paddle) return;
-        paddleRef.current = paddle;
         paddle.Checkout.open(buildCheckoutOptions({ priceId, accountId, email: email ?? undefined }));
       })
       .catch(() => setError("Could not load checkout. Please try again."));
