@@ -7,15 +7,3 @@
 export const LICENSE_BASE_URL = "https://aicodingalerts.mbparvezme.workers.dev/api";
 export const LICENSE_PUBLIC_KEY_B64 = "tG7Hi5fD4TZg5a547Nh1yONHBQRqU1Snpl8EqOyOlRw=";
 export const PADDLE_CHECKOUT_URL = "https://aicodingalert.com/#pricing";
-feat(web): live-priced Free/Pro pricing with overlay checkout
-
-Redesign the pricing section into Free + Pro tiers with a monthly/annual toggle, and drive Pro prices live from Paddle instead of hard-coded copy.
-
-- Pricing.tsx: Free + Pro cards, cadence toggle (annual default), vermilion launch-offer badge, 14-day money-back guarantee on annual only
-- Pull prices via Paddle PricePreview with the launch discount: strike = subtotal, promo = subtotal - discount, with static fallback from copy.ts
-- Switch checkout from the embedded inline form to a Paddle overlay popup, passing discountId so the promo applies at pay time
-- Add PADDLE_DISCOUNT_ID config; restructure copy.ts into free/pro tiers
-- Remove the redundant FreeVsPro table (merged into the cards) and the old InlineCheckout component
-- Fix Auth.js on Workers: pass AUTH_SECRET explicitly from the Cloudflare context env, and call initOpenNextCloudflareForDev() so bindings resolve under next dev
-
-Verified: typecheck, 59 tests, next build, and live sandbox (discount applies exactly 25% on both cadences; toggle swaps price and guarantee).
