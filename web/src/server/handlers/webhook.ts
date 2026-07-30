@@ -47,7 +47,15 @@ export async function handleWebhook(request: Request, deps: WebhookDeps): Promis
       if (evt.customerId) {
         await repo.setPaddleCustomerId(deps.db, evt.accountId, evt.customerId, nowMs);
       }
+    } else {
+      // Paid subscription event carried an accountId with no matching user — the sub is
+      // dropped. Log NON-SECRET context only (event id + reason) so this failure mode is
+      // observable in `wrangler tail` without leaking tokens/customer data.
+      console.warn(`paddle_webhook: dropped subscription event ${evt.eventId} (reason=user_not_found)`);
     }
+  } else {
+    // A subscription event with no custom_data.accountId cannot be attributed to a user.
+    console.warn(`paddle_webhook: dropped subscription event ${evt.eventId} (reason=no_accountId)`);
   }
 
   await repo.recordProcessedEvent(deps.db, evt.eventId, deps.now());

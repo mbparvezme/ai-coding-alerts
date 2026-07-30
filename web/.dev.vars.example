@@ -1,6 +1,8 @@
 # Local secrets for `wrangler dev` / `next dev`. Copy this file to `.dev.vars` (gitignored) and fill in.
 # In production these are set with `wrangler secret put <NAME>`.
 
+# Public: tG7Hi5fD4TZg5a547Nh1yONHBQRqU1Snpl8EqOyOlRw=
+
 LICENSE_SIGNING_PRIVATE_KEY=
 AUTH_SECRET=
 GITHUB_OAUTH_CLIENT_ID=
