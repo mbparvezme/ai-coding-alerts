@@ -15,6 +15,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
   const { env } = getCloudflareContext();
   return {
     trustHost: true,
+    // On Workers/OpenNext, secrets come from getCloudflareContext().env (.dev.vars locally,
+    // `wrangler secret` in prod), NOT process.env — so Auth.js's auto-read of AUTH_SECRET
+    // finds nothing. Pass it explicitly from env, same as the GitHub credentials below.
+    secret: env.AUTH_SECRET,
     session: { strategy: "jwt" },
     providers: [GitHub({ clientId: env.GITHUB_OAUTH_CLIENT_ID, clientSecret: env.GITHUB_OAUTH_CLIENT_SECRET })],
     callbacks: {

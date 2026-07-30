@@ -4,7 +4,6 @@ import { Hero } from "@/components/landing/Hero";
 import { Problem } from "@/components/landing/Problem";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Features } from "@/components/landing/Features";
-import { FreeVsPro } from "@/components/landing/FreeVsPro";
 import { Pricing } from "@/components/landing/Pricing";
 import { Faq } from "@/components/landing/Faq";
 import { FinalCta } from "@/components/landing/FinalCta";
@@ -22,7 +21,6 @@ export default async function HomePage() {
       <Problem />
       <HowItWorks />
       <Features />
-      <FreeVsPro />
       <section id="pricing" className="mx-auto max-w-4xl px-6 py-20">
         <h2 className="mb-10 text-center text-2xl font-semibold text-text">Less than you spend not-thinking-about-it.</h2>
         <Pricing accountId={accountId} email={email} />
