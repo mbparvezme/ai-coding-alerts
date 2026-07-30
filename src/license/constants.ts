@@ -2,5 +2,5 @@
 // (Next.js routes live under /api). LICENSE_PUBLIC_KEY_B64 is the base64 raw Ed25519 public key
 // printed by web/scripts/gen-keys.mjs — paste the PUBLIC value here at deploy time.
 export const LICENSE_BASE_URL = "https://aicodingalert.com/api";
-export const LICENSE_PUBLIC_KEY_B64 = "REPLACE_WITH_ED25519_PUBLIC_KEY_BASE64";
+export const LICENSE_PUBLIC_KEY_B64 = "tG7Hi5fD4TZg5a547Nh1yONHBQRqU1Snpl8EqOyOlRw=";
 export const PADDLE_CHECKOUT_URL = "https://aicodingalert.com/#pricing";
