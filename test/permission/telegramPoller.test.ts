@@ -17,7 +17,7 @@ function harness(scripted: TelegramUpdate[][]) {
       return batch;
     },
     chatId: () => "555",
-    onCallback: async (cb: any) => seen.push({ kind: "cb", ...cb }),
+    onCallback: async (cb: any) => { seen.push({ kind: "cb", ...cb }); },
     loadOffset: () => offset,
     saveOffset: (n: number) => (offset = n),
     isActive: () => active,
@@ -53,7 +53,7 @@ test("recovers from a getUpdates error via backoff", async () => {
       return [{ update_id: 5, callback_query: { id: "q", data: "v1:i:approve", message: { message_id: 1, chat: { id: 1 } } } }];
     },
     chatId: () => "1",
-    onCallback: async (cb) => seen.push(cb),
+    onCallback: async (cb) => { seen.push(cb); },
     loadOffset: () => 0,
     saveOffset: () => {},
     isActive: () => active,

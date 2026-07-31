@@ -56,7 +56,7 @@ test("POST /permission returns an id and GET /decision/:id returns status", asyn
   const postRes = await fetch(`http://127.0.0.1:${port}/permission`, {
     method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ hook_event_name: "PermissionRequest" })
   });
-  const posted = await postRes.json();
+  const posted = (await postRes.json()) as { id: string };
   const decided = await get(port, "/decision/pid-1");
   const unknown = await get(port, "/decision/nope");
   await server.stop();

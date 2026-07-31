@@ -35,7 +35,7 @@ test("unknown id reads as expired", () => {
 
 test("onChange fires on resolve; pendingCount reflects open decisions", () => {
   let fired = 0;
-  const store = new PendingDecisionStore({ idGen: () => `id${store.pendingCount()}` });
+  const store: PendingDecisionStore = new PendingDecisionStore({ idGen: () => `id${store.pendingCount()}` });
   const off = store.onChange(() => (fired += 1));
   const id = store.create(5000);
   assert.equal(store.pendingCount(), 1);

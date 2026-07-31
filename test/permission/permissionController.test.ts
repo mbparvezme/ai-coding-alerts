@@ -14,7 +14,7 @@ function setup(overrides: Partial<Parameters<typeof createPermissionSystem>[0]> 
   const allowRules = new AllowRules();
   const api = () => ({
     sendMessage: async (chatId: string, text: string, keyboard: any) => { sent.push({ chatId, text, keyboard }); return { message_id: 7 }; },
-    editMessageText: async (chatId: string, messageId: number, text: string) => { edits.push({ messageId, text }); },
+    editMessageText: async (_chatId: string, messageId: number, text: string) => { edits.push({ messageId, text }); },
     answerCallbackQuery: async (id: string, text?: string) => { answered.push({ id, text }); },
     getUpdates: async () => []
   });
@@ -52,7 +52,7 @@ test("approve callback resolves allow and edits the message", async () => {
 });
 
 test("remember resolves allow and auto-approves the next identical request", async () => {
-  const { sys, store, allowRules, sent } = setup();
+  const { sys, store, sent } = setup();
   const { id } = await sys.create(payload);
   await new Promise((r) => setImmediate(r));
   await sys.handleCallback({ callbackQueryId: "q", data: `v1:${id}:remember` });
