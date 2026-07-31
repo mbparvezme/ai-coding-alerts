@@ -80,7 +80,7 @@ export function createPermissionSystem(deps: PermissionDeps): PermissionSystem {
       }
       const id = deps.store.create(deps.ttlMs());
       const text = deps.messageFor(payload);
-      const ctx: { info: PermissionInfo | null; messageId?: number; dismissPc?: () => void; done: boolean } = { info, done: false };
+      const ctx: { info: PermissionInfo | null; messageId?: number; dismissPc?: () => void; timer?: NodeJS.Timeout; done: boolean } = { info, done: false };
       context.set(id, ctx);
 
       const off = deps.store.onChange(() => {
@@ -91,6 +91,9 @@ export function createPermissionSystem(deps: PermissionDeps): PermissionSystem {
       const timer = setTimeout(() => {
         if (deps.store.status(id) === "expired") { off(); void finish(id, `⏱ ${text}\n\nTimed out — answer on your computer`); }
       }, deps.ttlMs() + 1000);
+      // Don't let this background timer hold the process open on its own; the VS Code
+      // extension host stays alive independently, so it still fires at genuine expiry.
+      timer.unref?.();
       ctx.timer = timer;
 
       ctx.dismissPc = deps.showPcPrompt(text, (d) => deps.store.resolve(id, d));
