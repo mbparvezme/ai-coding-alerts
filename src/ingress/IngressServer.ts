@@ -72,9 +72,15 @@ export class IngressServer {
       return;
     }
     if (this.permission && req.method === "GET" && url.startsWith("/decision/")) {
-      const id = decodeURIComponent(url.slice("/decision/".length));
-      const { status } = this.permission.decision(id);
-      res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ status }));
+      try {
+        const id = decodeURIComponent(url.slice("/decision/".length));
+        const { status } = this.permission.decision(id);
+        res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ status }));
+      } catch {
+        // A malformed id (bad %-escape) or a throwing decision() must not crash the
+        // host; report "expired" so the hook falls back to the native dialog (fail-safe).
+        res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ status: "expired" }));
+      }
       return;
     }
     res.writeHead(404).end();

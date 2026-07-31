@@ -174,7 +174,8 @@ export function activate(context: vscode.ExtensionContext): void {
         .then((choice) => {
           if (live && choice === "Approve") resolve("allow");
           else if (live && choice === "Deny") resolve("deny");
-        });
+        })
+        .then(undefined, (e) => output.appendLine(`PC prompt failed: ${String(e)}`));
       return () => { live = false; }; // best-effort: VS Code notifications can't be force-closed; stale clicks are ignored by first-wins
     },
     muteFor: (ms) => { mute.muteFor(ms); updateMuteStatus(); },

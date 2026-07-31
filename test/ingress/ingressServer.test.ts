@@ -66,6 +66,23 @@ test("POST /permission returns an id and GET /decision/:id returns status", asyn
   assert.deepEqual(unknown.body, { status: "expired" });
 });
 
+test("GET /decision with a malformed id or throwing handler is fail-safe (expired, no crash)", async () => {
+  const server = new IngressServer(() => {}, {
+    create: () => ({ id: "pid-1" }),
+    decision: () => { throw new Error("boom"); }
+  });
+  await server.start(0 as unknown as number);
+  const port = server.port();
+  // Malformed %-escape would throw in decodeURIComponent; a throwing decision() also must not crash.
+  const badEscape = await get(port, "/decision/%");
+  const throwing = await get(port, "/decision/anything");
+  await server.stop();
+  assert.equal(badEscape.status, 200);
+  assert.deepEqual(badEscape.body, { status: "expired" });
+  assert.equal(throwing.status, 200);
+  assert.deepEqual(throwing.body, { status: "expired" });
+});
+
 test("permission routes 404 when no permission handler is provided", async () => {
   const server = new IngressServer(() => {});
   await server.start(0 as unknown as number);
