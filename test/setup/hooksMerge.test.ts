@@ -63,3 +63,12 @@ test("replaces stale curl and old script hooks instead of duplicating", () => {
   assert.equal(hooks.Notification.length, 1);
   assert.ok(hooks.Notification[0].hooks[0].command.includes(".ai-coding-alerts"));
 });
+
+test("recognizes and replaces a stale permission-hook entry", () => {
+  const settings = { hooks: { PermissionRequest: [{ hooks: [{ type: "command", command: '"/x/permission-hook.sh"' }] }] } };
+  const desired = [{ event: "PermissionRequest", command: '"/new/permission-hook.sh"' }];
+  const merged = mergeHooks(settings, desired);
+  const entries = (merged.settings.hooks as any).PermissionRequest;
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].hooks[0].command, '"/new/permission-hook.sh"');
+});

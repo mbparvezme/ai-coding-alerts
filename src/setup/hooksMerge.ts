@@ -10,7 +10,7 @@ interface HookGroup {
   hooks?: HookEntry[];
 }
 
-const OUR_COMMAND = /alert-hook\.(cmd|sh)|127\.0\.0\.1:\d+\/alert/;
+const OUR_COMMAND = /alert-hook\.(cmd|sh)|permission-hook\.(cmd|sh)|127\.0\.0\.1:\d+\/(alert|permission|decision)/;
 
 function isOurs(entry: HookEntry): boolean {
   return entry.type === "command" && typeof entry.command === "string" && OUR_COMMAND.test(entry.command);

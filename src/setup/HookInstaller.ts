@@ -5,7 +5,10 @@ import { Os } from "../platform/Platform";
 import { desiredHooks } from "./hookCommands";
 import { mergeHooks } from "./hooksMerge";
 
-const SCRIPTS = ["alert-hook.cmd", "alert-fallback.ps1", "alert-hook.sh", "alert-fallback.sh"];
+const SCRIPTS = [
+  "alert-hook.cmd", "alert-fallback.ps1", "alert-hook.sh", "alert-fallback.sh",
+  "permission-hook.cmd", "permission-hook.ps1", "permission-hook.sh"
+];
 const DEFAULT_PORT = "51789";
 
 export type HookStatus = "current" | "setup-needed" | "unreadable";
