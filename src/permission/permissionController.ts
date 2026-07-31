@@ -41,7 +41,7 @@ function keyboard(id: string): InlineButton[][] {
 
 export function createPermissionSystem(deps: PermissionDeps): PermissionSystem {
   // Live pending context, keyed by decision id, needed by handleCallback.
-  const context = new Map<string, { info: PermissionInfo | null; messageId?: number; dismissPc?: () => void; done: boolean }>();
+  const context = new Map<string, { info: PermissionInfo | null; messageId?: number; dismissPc?: () => void; timer?: NodeJS.Timeout; done: boolean }>();
 
   const finish = async (id: string, outcome: string): Promise<void> => {
     const ctx = context.get(id);
@@ -49,7 +49,14 @@ export function createPermissionSystem(deps: PermissionDeps): PermissionSystem {
       return;
     }
     ctx.done = true;
-    ctx.dismissPc?.();
+    if (ctx.timer !== undefined) {
+      clearTimeout(ctx.timer);
+    }
+    try {
+      ctx.dismissPc?.();
+    } catch (e) {
+      deps.log(`dismiss PC prompt failed: ${String(e)}`);
+    }
     if (ctx.messageId !== undefined) {
       try {
         await deps.api().editMessageText(deps.chatId(), ctx.messageId, outcome);
@@ -81,9 +88,10 @@ export function createPermissionSystem(deps: PermissionDeps): PermissionSystem {
         if (status === "allow") { off(); void finish(id, `✅ ${text}\n\nApproved`); }
         else if (status === "deny") { off(); void finish(id, `⛔ ${text}\n\nDenied`); }
       });
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         if (deps.store.status(id) === "expired") { off(); void finish(id, `⏱ ${text}\n\nTimed out — answer on your computer`); }
       }, deps.ttlMs() + 1000);
+      ctx.timer = timer;
 
       ctx.dismissPc = deps.showPcPrompt(text, (d) => deps.store.resolve(id, d));
       deps.api()
