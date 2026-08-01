@@ -124,6 +124,24 @@
           "minimum": 5,
           "maximum": 600,
           "description": "Seconds to wait between repeated popup sounds."
+        },
+        "aiCodingAlerts.enableTelegramTwoWay": {
+          "order": 17,
+          "type": "boolean",
+          "default": true,
+          "description": "Let Telegram Approve/Deny buttons answer an agent's permission request. Requires a bot token and chat id."
+        },
+        "aiCodingAlerts.permissionTimeoutSec": {
+          "order": 18,
+          "type": "number",
+          "default": 300,
+          "description": "How long to wait for a Telegram (or on-screen) decision before falling back to Claude Code's normal permission prompt."
+        },
+        "aiCodingAlerts.telegramMuteMinutes": {
+          "order": 19,
+          "type": "number",
+          "default": 480,
+          "description": "How long the Telegram 'Mute' button silences alerts."
         }
       }
     },

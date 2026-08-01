@@ -1,46 +1,14 @@
 import * as vscode from "vscode";
-import { SoundChoices } from "./soundResolver";
+import { AlertSettings, readAlertSettings } from "./readAlertSettings";
+
+export type { AlertSettings } from "./readAlertSettings";
 
 const SECTION = "aiCodingAlerts";
-
-export interface AlertSettings extends SoundChoices {
-  port: number;
-  popupAlertDelay: number;
-  finishedAlertDelay: number;
-  enableOsNotification: boolean;
-  enableWindowFocus: boolean;
-  telegram: { enabled: boolean; botToken: string; chatId: string };
-  escalationRepeats: number;
-  escalationInterval: number;
-}
 
 export class ConfigService {
   read(): AlertSettings {
     const config = vscode.workspace.getConfiguration(SECTION);
-    return {
-      port: config.get<number>("port", 51789),
-      popupAlertDelay: config.get<number>("popupAlertDelay", 3),
-      finishedAlertDelay: config.get<number>("finishedAlertDelay", 10),
-      popup: {
-        sound: config.get<string>("popupSound", "alarm"),
-        customSoundPath: config.get<string>("popupCustomSoundPath", ""),
-        enabled: config.get<boolean>("enablePopupSound", true)
-      },
-      finished: {
-        sound: config.get<string>("finishedSound", "chime"),
-        customSoundPath: config.get<string>("finishedCustomSoundPath", ""),
-        enabled: config.get<boolean>("enableFinishedSound", true)
-      },
-      enableOsNotification: config.get<boolean>("enableOsNotification", true),
-      enableWindowFocus: config.get<boolean>("enableWindowFocus", true),
-      telegram: {
-        enabled: config.get<boolean>("enableTelegramPush", false),
-        botToken: config.get<string>("telegramBotToken", ""),
-        chatId: config.get<string>("telegramChatId", "")
-      },
-      escalationRepeats: config.get<number>("escalationRepeats", 3),
-      escalationInterval: config.get<number>("escalationInterval", 30)
-    };
+    return readAlertSettings(<T>(key: string, fallback: T) => config.get<T>(key, fallback));
   }
 
   onDidChange(listener: () => void): vscode.Disposable {

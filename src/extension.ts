@@ -23,6 +23,11 @@ import { DashboardPanel } from "./views/DashboardPanel";
 import { HookInstaller } from "./setup/HookInstaller";
 import { buildHealthReport } from "./health/healthReport";
 import { createAccountService, registerAccountCommands } from "./license/wire";
+import { PendingDecisionStore } from "./permission/PendingDecisionStore";
+import { AllowRules } from "./permission/AllowRules";
+import { TelegramPoller } from "./permission/TelegramPoller";
+import { createPermissionSystem } from "./permission/permissionController";
+import { createTelegramApi } from "./platform/telegramApi";
 
 const HOOKS_PROMPT_DISMISSED = "aiCodingAlerts.hooksPromptDismissed";
 const HOOKS_GUIDE_URL = "https://github.com/mbparvezme/ai-coding-alerts#claude-code-hooks";
@@ -133,7 +138,71 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   };
 
-  let server = new IngressServer(handlePayload);
+  const muteStatus = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+  muteStatus.command = "aiCodingAlerts.toggleMute";
+  let muteTimer: NodeJS.Timeout | undefined;
+  const updateMuteStatus = (): void => {
+    const muted = mute.isMuted();
+    muteStatus.text = muted ? "$(bell-slash) Alerts muted" : "$(bell) Alerts";
+    muteStatus.tooltip = muted
+      ? "AI Coding Alerts are muted — click to change"
+      : "AI Coding Alerts are active — click to snooze or mute";
+  };
+  updateMuteStatus();
+  muteStatus.show();
+
+  const decisions = new PendingDecisionStore();
+  const allowRules = new AllowRules();
+  const telegramApiFor = () => createTelegramApi(config.read().telegram.botToken);
+  const twoWayEnabled = () => {
+    const t = config.read().telegram;
+    return t.enabled && t.twoWay && t.botToken.trim() !== "" && t.chatId.trim() !== "";
+  };
+
+  const permissionSystem = createPermissionSystem({
+    store: decisions,
+    allowRules,
+    api: telegramApiFor,
+    enabled: twoWayEnabled,
+    chatId: () => config.read().telegram.chatId.trim(),
+    ttlMs: () => config.read().permissionTimeoutSec * 1000,
+    messageFor: (payload) => registry.detect(payload)?.message ?? "Permission needed",
+    showPcPrompt: (text, resolve) => {
+      let live = true;
+      void vscode.window
+        .showInformationMessage(`Claude Code — ${text}`, "Approve", "Deny")
+        .then((choice) => {
+          if (live && choice === "Approve") resolve("allow");
+          else if (live && choice === "Deny") resolve("deny");
+        })
+        .then(undefined, (e) => output.appendLine(`PC prompt failed: ${String(e)}`));
+      return () => { live = false; }; // best-effort: VS Code notifications can't be force-closed; stale clicks are ignored by first-wins
+    },
+    muteFor: (ms) => { mute.muteFor(ms); updateMuteStatus(); },
+    muteMs: () => config.read().telegramMuteMinutes * 60 * 1000,
+    log: (msg) => output.appendLine(msg)
+  });
+
+  const poller = new TelegramPoller({
+    getUpdates: (offset, timeoutSec) => telegramApiFor().getUpdates(offset, timeoutSec),
+    chatId: () => config.read().telegram.chatId.trim(),
+    onCallback: (cb) => permissionSystem.handleCallback(cb),
+    loadOffset: () => context.globalState.get<number>("aiCodingAlerts.tgOffset", 0),
+    saveOffset: (n) => void context.globalState.update("aiCodingAlerts.tgOffset", n),
+    isActive: () => twoWayEnabled() && decisions.pendingCount() > 0
+  });
+  decisions.onChange(() => { if (twoWayEnabled() && decisions.pendingCount() > 0) poller.start(); });
+
+  const permissionRoutes = {
+    create: async (payload: unknown) => {
+      const res = await permissionSystem.create(payload);
+      if (twoWayEnabled() && decisions.pendingCount() > 0) poller.start();
+      return res;
+    },
+    decision: (id: string) => permissionSystem.decision(id)
+  };
+
+  let server = new IngressServer(handlePayload, permissionRoutes);
   const startServer = async (): Promise<void> => {
     for (const candidate of candidatePorts(configuredPort)) {
       try {
@@ -154,19 +223,6 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.showWarningMessage(`AI Coding Alerts: no free port found near ${configuredPort}. Change aiCodingAlerts.port.`);
   };
   void startServer();
-
-  const muteStatus = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-  muteStatus.command = "aiCodingAlerts.toggleMute";
-  let muteTimer: NodeJS.Timeout | undefined;
-  const updateMuteStatus = (): void => {
-    const muted = mute.isMuted();
-    muteStatus.text = muted ? "$(bell-slash) Alerts muted" : "$(bell) Alerts";
-    muteStatus.tooltip = muted
-      ? "AI Coding Alerts are muted — click to change"
-      : "AI Coding Alerts are active — click to snooze or mute";
-  };
-  updateMuteStatus();
-  muteStatus.show();
 
   const account = createAccountService(context);
   registerAccountCommands(context, account);
@@ -246,7 +302,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       configuredPort = nextPort;
       await server.stop();
-      server = new IngressServer(handlePayload);
+      server = new IngressServer(handlePayload, permissionRoutes);
       await startServer();
     }),
     { dispose: () => void server.stop() }
