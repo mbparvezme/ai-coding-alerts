@@ -40,4 +40,16 @@ describe("relay permission", () => {
     const row = await env.DB.prepare("SELECT status, tg_message_id FROM relay_requests WHERE request_id = 'req_1'").first<any>();
     expect(row).toEqual({ status: "pending", tg_message_id: 77 });
   });
+
+  it("is fail-safe when the Telegram send throws (200, row stays pending, no message id)", async () => {
+    await env.DB.prepare("INSERT INTO telegram_links (user_id, chat_id, linked_at) VALUES ('acct_1', '555', 0)").run();
+    deps.telegram.sendMessage = async () => { throw new Error("telegram down"); };
+    const res = await call({ tool: "Bash", command: "npm test", ttlSec: 300 });
+    const body = await res.json<any>();
+    expect(res.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.requestId).toBe("req_1");
+    const row = await env.DB.prepare("SELECT status, tg_message_id FROM relay_requests WHERE request_id = 'req_1'").first<any>();
+    expect(row).toEqual({ status: "pending", tg_message_id: null });
+  });
 });
