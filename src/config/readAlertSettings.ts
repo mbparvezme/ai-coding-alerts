@@ -11,6 +11,7 @@ export interface AlertSettings extends SoundChoices {
   telegramMuteMinutes: number;
   escalationRepeats: number;
   escalationInterval: number;
+  preferManagedBot: boolean;
 }
 
 export type Getter = <T>(key: string, fallback: T) => T;
@@ -33,6 +34,7 @@ export function readAlertSettings(get: Getter): AlertSettings {
     permissionTimeoutSec: get("permissionTimeoutSec", 300),
     telegramMuteMinutes: get("telegramMuteMinutes", 480),
     escalationRepeats: get("escalationRepeats", 3),
-    escalationInterval: get("escalationInterval", 30)
+    escalationInterval: get("escalationInterval", 30),
+    preferManagedBot: get("preferManagedBot", true)
   };
 }

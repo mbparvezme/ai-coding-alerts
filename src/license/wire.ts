@@ -75,6 +75,21 @@ export function registerAccountCommands(context: vscode.ExtensionContext, servic
         await service.signOut();
         void vscode.window.showInformationMessage("Signed out on this device.");
       }
+    }),
+    vscode.commands.registerCommand("aiCodingAlerts.connectTelegram", async () => {
+      const token = await service.currentToken();
+      if (!token) { void vscode.window.showInformationMessage("Sign in and subscribe to use the managed bot."); return; }
+      try {
+        const res = await fetch(`${LICENSE_BASE_URL}/relay/link-code`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+        const body = (await res.json()) as { ok?: boolean; deepLink?: string };
+        if (body?.ok && body.deepLink) void vscode.env.openExternal(vscode.Uri.parse(body.deepLink));
+        else void vscode.window.showErrorMessage("Couldn't start Telegram linking. Try again.");
+      } catch { void vscode.window.showErrorMessage("Couldn't reach the linking service."); }
+    }),
+    vscode.commands.registerCommand("aiCodingAlerts.refreshAccountStatus", async () => {
+      const r = await service.recheckNow();
+      const linked = service.state().telegramLinked;
+      void vscode.window.showInformationMessage(r.ok ? `Account re-checked. Telegram ${linked ? "linked" : "not linked"}.` : `Re-check: ${r.message}`);
     })
   );
 }

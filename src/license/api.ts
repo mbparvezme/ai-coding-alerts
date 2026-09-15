@@ -11,6 +11,7 @@ export type AuthResult =
       token: string;
       status: string;
       plan: string | null;
+      telegramLinked: boolean;
       account?: { id: string; email: string | null; name: string | null; username: string | null; avatarUrl: string | null };
     }
   | {
@@ -46,10 +47,18 @@ async function callAuth(url: string, githubToken: string, deviceId: string, fetc
     token?: string;
     status?: string;
     plan?: string | null;
+    telegramLinked?: boolean;
     account?: { id: string; email: string | null; name: string | null; username: string | null; avatarUrl: string | null };
   };
   if (res.status === 200 && body.ok && body.token) {
-    return { ok: true, token: body.token, status: body.status ?? "active", plan: body.plan ?? null, account: body.account };
+    return {
+      ok: true,
+      token: body.token,
+      status: body.status ?? "active",
+      plan: body.plan ?? null,
+      telegramLinked: body.telegramLinked ?? false,
+      account: body.account
+    };
   }
   return mapAuthError(res.status, body.error);
 }
