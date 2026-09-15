@@ -43,7 +43,7 @@ export function createManagedBroker(deps: ManagedBrokerDeps): { create(payload: 
         } catch (e) {
           deps.log(`relay poll failed: ${String(e)}`);
         } finally {
-          dismissPc();
+          try { dismissPc(); } catch { /* prompt already disposed */ }
         }
       })();
 

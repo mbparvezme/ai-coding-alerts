@@ -41,3 +41,16 @@ test("notLinked leaves the decision to expire (never fails open)", async () => {
   for (let i = 0; i < 3; i++) await tick();
   assert.equal(store.status(id), "pending"); // never resolved to allow; will expire -> native
 });
+
+test("resolves deny and dismisses the PC prompt", async () => {
+  let polls = 0;
+  const relay = {
+    createPermission: async () => ({ ok: true, requestId: "req_1" }),
+    getDecision: async () => (++polls >= 2 ? "deny" : "pending")
+  };
+  const { store, broker, prompts } = setup(relay);
+  const { id } = await broker.create(payload);
+  for (let i = 0; i < 6; i++) await tick();
+  assert.equal(store.status(id), "deny");
+  assert.ok(prompts.includes("dismissed"));
+});
