@@ -45,20 +45,20 @@ CREATE TABLE processed_events (
 );
 
 CREATE TABLE telegram_links (
-  user_id    TEXT PRIMARY KEY,
+  user_id    TEXT PRIMARY KEY REFERENCES users(id),
   chat_id    TEXT NOT NULL UNIQUE,
   linked_at  INTEGER NOT NULL
 );
 
 CREATE TABLE telegram_link_codes (
   code       TEXT PRIMARY KEY,
-  user_id    TEXT NOT NULL,
+  user_id    TEXT NOT NULL REFERENCES users(id),
   expires_at INTEGER NOT NULL
 );
 
 CREATE TABLE relay_requests (
   request_id    TEXT PRIMARY KEY,
-  user_id       TEXT NOT NULL,
+  user_id       TEXT NOT NULL REFERENCES users(id),
   device_id     TEXT NOT NULL,
   status        TEXT NOT NULL DEFAULT 'pending',
   tg_message_id INTEGER,
