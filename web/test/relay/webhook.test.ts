@@ -37,6 +37,10 @@ describe("telegram webhook", () => {
     expect((await env.DB.prepare("SELECT status FROM relay_requests WHERE request_id='r1'").first<any>()).status).toBe("allow");
     expect(edits[0].text).toMatch(/approv/i);
     expect(answers.length).toBe(2);
+    // A second legitimate owner tap must NOT re-resolve (first-wins):
+    await hook({ callback_query: { id: "c2", data: "v1:r1:deny", message: { message_id: 9, chat: { id: 555 } } } });
+    expect((await env.DB.prepare("SELECT status FROM relay_requests WHERE request_id='r1'").first<any>()).status).toBe("allow"); // still allow, not deny
+    expect(answers[answers.length - 1].text).toMatch(/already handled/i);
   });
 
   it("links a chat via /start <code> and rejects a code owned by another chat's account conflict", async () => {
@@ -44,5 +48,15 @@ describe("telegram webhook", () => {
     await hook({ message: { text: "/start CODE1", chat: { id: 555 } } });
     expect((await env.DB.prepare("SELECT chat_id FROM telegram_links WHERE user_id='acct_1'").first<any>()).chat_id).toBe("555");
     expect(sent.some((m) => /linked/i.test(m.text))).toBe(true);
+  });
+
+  it("refuses /start when the chat is already linked to a different account", async () => {
+    await env.DB.prepare("INSERT INTO users (id, github_id, created_at, updated_at) VALUES ('acct_2', 2, 0, 0)").run();
+    await env.DB.prepare("INSERT INTO telegram_links (user_id, chat_id, linked_at) VALUES ('acct_2','555',0)").run();
+    await env.DB.prepare("INSERT INTO telegram_link_codes (code, user_id, expires_at) VALUES ('CODE2','acct_1',9999999999999)").run();
+    await hook({ message: { text: "/start CODE2", chat: { id: 555 } } });
+    // link is unchanged — still points at acct_2, not overwritten to acct_1:
+    expect((await env.DB.prepare("SELECT user_id FROM telegram_links WHERE chat_id='555'").first<any>()).user_id).toBe("acct_2");
+    expect(sent.some((m) => /already linked/i.test(m.text))).toBe(true);
   });
 });
