@@ -16,6 +16,11 @@ export async function importSigningKey(pkcs8Base64: string): Promise<CryptoKey> 
   return crypto.subtle.importKey("pkcs8", pkcs8, { name: "Ed25519" }, false, ["sign"]);
 }
 
+export async function importVerifyKey(publicKeyBase64: string): Promise<CryptoKey> {
+  const spki = Uint8Array.from(atob(publicKeyBase64), (c) => c.charCodeAt(0));
+  return crypto.subtle.importKey("spki", spki, { name: "Ed25519" }, false, ["verify"]);
+}
+
 export async function signLicenseToken(payload: TokenPayload, key: CryptoKey): Promise<string> {
   const body = base64urlEncodeString(JSON.stringify(payload));
   const signingInput = `${HEADER}.${body}`;
