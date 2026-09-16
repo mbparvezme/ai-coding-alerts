@@ -28,6 +28,11 @@ import { AllowRules } from "./permission/AllowRules";
 import { TelegramPoller } from "./permission/TelegramPoller";
 import { createPermissionSystem } from "./permission/permissionController";
 import { createTelegramApi } from "./platform/telegramApi";
+import { createRelayClient } from "./relay/relayClient";
+import { createManagedBroker } from "./permission/managedBroker";
+import { selectBroker } from "./permission/modeSelect";
+import { newId } from "./util/id";
+import { LICENSE_BASE_URL } from "./license/constants";
 
 const HOOKS_PROMPT_DISMISSED = "aiCodingAlerts.hooksPromptDismissed";
 const HOOKS_GUIDE_URL = "https://github.com/mbparvezme/ai-coding-alerts#claude-code-hooks";
@@ -151,12 +156,25 @@ export function activate(context: vscode.ExtensionContext): void {
   updateMuteStatus();
   muteStatus.show();
 
+  const account = createAccountService(context);
   const decisions = new PendingDecisionStore();
   const allowRules = new AllowRules();
   const telegramApiFor = () => createTelegramApi(config.read().telegram.botToken);
   const twoWayEnabled = () => {
     const t = config.read().telegram;
     return t.enabled && t.twoWay && t.botToken.trim() !== "" && t.chatId.trim() !== "";
+  };
+
+  const showPcPrompt = (text: string, resolve: (d: "allow" | "deny") => void): (() => void) => {
+    let live = true;
+    void vscode.window
+      .showInformationMessage(`Claude Code — ${text}`, "Approve", "Deny")
+      .then((choice) => {
+        if (live && choice === "Approve") resolve("allow");
+        else if (live && choice === "Deny") resolve("deny");
+      })
+      .then(undefined, (e) => output.appendLine(`PC prompt failed: ${String(e)}`));
+    return () => { live = false; }; // best-effort: VS Code notifications can't be force-closed; stale clicks are ignored by first-wins
   };
 
   const permissionSystem = createPermissionSystem({
@@ -167,17 +185,7 @@ export function activate(context: vscode.ExtensionContext): void {
     chatId: () => config.read().telegram.chatId.trim(),
     ttlMs: () => config.read().permissionTimeoutSec * 1000,
     messageFor: (payload) => registry.detect(payload)?.message ?? "Permission needed",
-    showPcPrompt: (text, resolve) => {
-      let live = true;
-      void vscode.window
-        .showInformationMessage(`Claude Code — ${text}`, "Approve", "Deny")
-        .then((choice) => {
-          if (live && choice === "Approve") resolve("allow");
-          else if (live && choice === "Deny") resolve("deny");
-        })
-        .then(undefined, (e) => output.appendLine(`PC prompt failed: ${String(e)}`));
-      return () => { live = false; }; // best-effort: VS Code notifications can't be force-closed; stale clicks are ignored by first-wins
-    },
+    showPcPrompt,
     muteFor: (ms) => { mute.muteFor(ms); updateMuteStatus(); },
     muteMs: () => config.read().telegramMuteMinutes * 60 * 1000,
     log: (msg) => output.appendLine(msg)
@@ -193,11 +201,40 @@ export function activate(context: vscode.ExtensionContext): void {
   });
   decisions.onChange(() => { if (twoWayEnabled() && decisions.pendingCount() > 0) poller.start(); });
 
+  const relayClient = createRelayClient({
+    fetchImpl: (url: string, init?: { method?: string; headers?: Record<string, string>; body?: string }) =>
+      fetch(url, init).then((r) => ({ status: r.status, json: () => r.json() })),
+    baseUrl: () => LICENSE_BASE_URL,
+    token: () => account.currentToken()
+  });
+  const managedBroker = createManagedBroker({
+    store: decisions,
+    relay: relayClient,
+    ttlMs: () => config.read().permissionTimeoutSec * 1000,
+    messageFor: (payload) => registry.detect(payload)?.message ?? "Permission needed",
+    showPcPrompt,
+    sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+    pollMs: 2000,
+    log: (msg) => output.appendLine(msg)
+  });
+
   const permissionRoutes = {
     create: async (payload: unknown) => {
-      const res = await permissionSystem.create(payload);
-      if (twoWayEnabled() && decisions.pendingCount() > 0) poller.start();
-      return res;
+      const mode = selectBroker({
+        isPro: account.state().pro,
+        linked: account.state().telegramLinked,
+        preferManaged: config.read().preferManagedBot,
+        diyConfigured: twoWayEnabled()
+      });
+      if (mode === "managed") {
+        return managedBroker.create(payload);
+      }
+      if (mode === "diy") {
+        const res = await permissionSystem.create(payload);
+        if (twoWayEnabled() && decisions.pendingCount() > 0) poller.start();
+        return res;
+      }
+      return { id: newId() }; // native: unknown id -> hook times out -> native prompt
     },
     decision: (id: string) => permissionSystem.decision(id)
   };
@@ -224,7 +261,6 @@ export function activate(context: vscode.ExtensionContext): void {
   };
   void startServer();
 
-  const account = createAccountService(context);
   registerAccountCommands(context, account);
   void account
     .init()

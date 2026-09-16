@@ -177,3 +177,17 @@ test("silent recheck with no GitHub session keeps the token and does not advance
   assert.equal(svc.isPro(), true);            // token kept
   assert.equal(day.current(), "2000-01-01");  // NOT advanced
 });
+
+test("recheck surfaces telegramLinked from the refresh response; currentToken returns the stored token", async () => {
+  const { pair, publicB64 } = await keypair();
+  const nowSec = 1_700_000_000, nowMs = nowSec * 1000 + 1000;
+  const token = await mint(pair, nowSec);
+  const auth: AuthProvider = { getSession: async () => ({ accessToken: "gho_x" }) };
+  const fetchImpl: FetchLike = async () => ({ status: 200, json: async () => ({ ok: true, token, status: "active", plan: "monthly", telegramLinked: true }) });
+  const svc = make({ publicB64, fetchImpl, now: () => nowMs, auth });
+  await svc.init();
+  assert.equal(svc.state().telegramLinked, false);   // never refreshed yet -> default false
+  await svc.recheckNow();
+  assert.equal(svc.state().telegramLinked, true);
+  assert.equal(await svc.currentToken(), token);
+});

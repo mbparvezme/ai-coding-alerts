@@ -2,6 +2,7 @@ import { verifyGithubToken } from "../account/github";
 import { resolveEntitlement } from "../account/entitlement";
 import { mintAccountToken } from "../account/mintToken";
 import * as repo from "../account/repository";
+import { getTelegramLink } from "../relay/repository";
 import type { AccountDeps } from "./authGithub";
 
 export async function handleAuthRefresh(request: Request, deps: AccountDeps): Promise<Response> {
@@ -28,12 +29,15 @@ export async function handleAuthRefresh(request: Request, deps: AccountDeps): Pr
   const subscription = await repo.getActiveSubscription(deps.db, user.id);
   const entitlement = resolveEntitlement(subscription);
 
+  const telegramLinked = (await getTelegramLink(deps.db, user.id)) !== null;
+
   const token = await mintAccountToken(user.id, body.deviceId, entitlement, nowMs, deps.signingKey);
 
   return Response.json({
     ok: true,
     token,
     status: entitlement.status,
-    plan: entitlement.plan
+    plan: entitlement.plan,
+    telegramLinked
   });
 }

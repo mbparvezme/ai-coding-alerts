@@ -35,6 +35,7 @@ const DAY_KEY = "aiCodingAlerts.lastCheckDay";
 export class AccountService {
   private publicKey: webcrypto.CryptoKey | null = null;
   private verifiedPayload: TokenPayload | null = null; // only ever set when signature verified
+  private telegramLinked = false;
 
   constructor(private readonly deps: AccountServiceDeps) {}
 
@@ -49,8 +50,8 @@ export class AccountService {
     return this.verifiedPayload !== null;
   }
 
-  state(): LicenseState {
-    return evaluateLicense(this.verifiedPayload, this.deps.now());
+  state(): LicenseState & { telegramLinked: boolean } {
+    return { ...evaluateLicense(this.verifiedPayload, this.deps.now()), telegramLinked: this.telegramLinked };
   }
 
   isPro(): boolean {
@@ -63,6 +64,7 @@ export class AccountService {
     if (!session) return { ok: false, code: "github_auth", message: "GitHub sign-in was cancelled." };
     const r = await authGithub(this.deps.baseUrl, session.accessToken, this.deps.deviceId, this.deps.fetchImpl);
     if (r.ok) {
+      this.telegramLinked = r.telegramLinked ?? false;
       await this.storeSession(r.token);
       await this.markCheckedToday();
     }
@@ -100,6 +102,7 @@ export class AccountService {
     if (!session) return { ok: false, code: "github_auth", message: "No GitHub session." };
     const r = await refreshAuth(this.deps.baseUrl, session.accessToken, this.deps.deviceId, this.deps.fetchImpl);
     if (r.ok) {
+      this.telegramLinked = r.telegramLinked ?? false;
       await this.storeSession(r.token);
       await this.markCheckedToday();
       return r;
@@ -122,7 +125,12 @@ export class AccountService {
 
   private async clearToken(): Promise<void> {
     this.verifiedPayload = null;
+    this.telegramLinked = false;
     await this.deps.secrets.delete(TOKEN_SECRET);
+  }
+
+  async currentToken(): Promise<string | undefined> {
+    return this.deps.secrets.get(TOKEN_SECRET);
   }
 
   private async markCheckedToday(): Promise<void> {

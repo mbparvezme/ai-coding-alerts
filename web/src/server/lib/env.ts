@@ -6,4 +6,8 @@ export interface AccountEnv {
   GITHUB_OAUTH_CLIENT_SECRET: string;
   AUTH_SECRET: string;
   PADDLE_API_KEY: string;
+  LICENSE_PUBLIC_KEY: string;
+  TELEGRAM_BOT_TOKEN: string;
+  TELEGRAM_BOT_USERNAME: string;
+  TELEGRAM_WEBHOOK_SECRET: string;
 }
