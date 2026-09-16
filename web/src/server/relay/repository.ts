@@ -81,3 +81,13 @@ export async function countPendingRelay(db: D1Database, userId: string, now: num
     .first<{ n: number }>();
   return row?.n ?? 0;
 }
+
+export async function sweepExpiredRelayRequests(db: D1Database, now: number): Promise<number> {
+  const res = await db.prepare("DELETE FROM relay_requests WHERE expires_at < ?").bind(now).run();
+  return res.meta.changes ?? 0;
+}
+
+export async function sweepExpiredLinkCodes(db: D1Database, now: number): Promise<number> {
+  const res = await db.prepare("DELETE FROM telegram_link_codes WHERE expires_at < ?").bind(now).run();
+  return res.meta.changes ?? 0;
+}

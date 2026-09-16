@@ -1,5 +1,5 @@
 import { authenticateRelay } from "../relay/relayAuth";
-import { getTelegramLink, createRelayRequest, setRelayMessageId, countPendingRelay } from "../relay/repository";
+import { getTelegramLink, createRelayRequest, setRelayMessageId, countPendingRelay, sweepExpiredRelayRequests } from "../relay/repository";
 import type { TelegramClient } from "../relay/telegram";
 
 export interface RelayPermissionDeps {
@@ -17,6 +17,9 @@ export async function handleRelayPermission(request: Request, deps: RelayPermiss
   const now = deps.now();
   const id = await authenticateRelay(request, deps.verifyKey, now);
   if (!id) return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
+
+  // Lazy expiry sweep: opportunistic housekeeping only, never allowed to affect the response.
+  await sweepExpiredRelayRequests(deps.db, now).catch(() => {});
 
   const body = (await request.json().catch(() => null)) as { tool?: string; command?: string; ttlSec?: number } | null;
   if (!body || typeof body.ttlSec !== "number" || body.ttlSec <= 0) {

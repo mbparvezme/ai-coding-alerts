@@ -1,5 +1,5 @@
 import { authenticateRelay } from "../relay/relayAuth";
-import { createLinkCode } from "../relay/repository";
+import { createLinkCode, sweepExpiredLinkCodes } from "../relay/repository";
 
 export interface RelayLinkCodeDeps {
   db: D1Database;
@@ -14,6 +14,10 @@ export async function handleRelayLinkCode(request: Request, deps: RelayLinkCodeD
   const now = deps.now();
   const id = await authenticateRelay(request, deps.verifyKey, now);
   if (!id) return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
+
+  // Lazy expiry sweep: opportunistic housekeeping only, never allowed to affect the response.
+  await sweepExpiredLinkCodes(deps.db, now).catch(() => {});
+
   const code = deps.genCode();
   await createLinkCode(deps.db, code, id.accountId, now + deps.codeTtlMs);
   return Response.json({ ok: true, code, deepLink: `https://t.me/${deps.botUsername}?start=${code}` });
