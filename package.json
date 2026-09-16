@@ -142,11 +142,6 @@
           "type": "number",
           "default": 480,
           "description": "How long the Telegram 'Mute' button silences alerts."
-        },
-        "aiCodingAlerts.preferManagedBot": {
-          "type": "boolean",
-          "default": true,
-          "description": "When you are Pro and have linked Telegram, use the managed AI Coding Alerts bot for approve/deny. Turn off to keep using your own bot (your command text then never leaves your machine)."
         }
       }
     },
@@ -157,12 +152,7 @@
       { "command": "aiCodingAlerts.testAlert", "title": "AI Coding Alerts: Send Test Alert" },
       { "command": "aiCodingAlerts.installHooks", "title": "AI Coding Alerts: Install Claude Code Hooks" },
       { "command": "aiCodingAlerts.healthCheck", "title": "AI Coding Alerts: Run Health Check" },
-      { "command": "aiCodingAlerts.toggleMute", "title": "AI Coding Alerts: Snooze / Mute Alerts" },
-      { "command": "aiCodingAlerts.signIn", "title": "AI Coding Alerts: Sign in with GitHub" },
-      { "command": "aiCodingAlerts.manageAccount", "title": "AI Coding Alerts: Manage Account" },
-      { "command": "aiCodingAlerts.upgrade", "title": "AI Coding Alerts: Get Pro" },
-      { "command": "aiCodingAlerts.connectTelegram", "title": "AI Coding Alerts: Connect Telegram (managed bot)" },
-      { "command": "aiCodingAlerts.refreshAccountStatus", "title": "AI Coding Alerts: Refresh account status" }
+      { "command": "aiCodingAlerts.toggleMute", "title": "AI Coding Alerts: Snooze / Mute Alerts" }
     ]
   },
   "scripts": {
