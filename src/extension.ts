@@ -22,17 +22,11 @@ import { HistoryPanel } from "./views/HistoryPanel";
 import { DashboardPanel } from "./views/DashboardPanel";
 import { HookInstaller } from "./setup/HookInstaller";
 import { buildHealthReport } from "./health/healthReport";
-import { createAccountService, registerAccountCommands } from "./license/wire";
 import { PendingDecisionStore } from "./permission/PendingDecisionStore";
 import { AllowRules } from "./permission/AllowRules";
 import { TelegramPoller } from "./permission/TelegramPoller";
 import { createPermissionSystem } from "./permission/permissionController";
 import { createTelegramApi } from "./platform/telegramApi";
-import { createRelayClient } from "./relay/relayClient";
-import { createManagedBroker } from "./permission/managedBroker";
-import { selectBroker } from "./permission/modeSelect";
-import { newId } from "./util/id";
-import { LICENSE_BASE_URL } from "./license/constants";
 
 const HOOKS_PROMPT_DISMISSED = "aiCodingAlerts.hooksPromptDismissed";
 const HOOKS_GUIDE_URL = "https://github.com/mbparvezme/ai-coding-alerts#claude-code-hooks";
@@ -156,7 +150,6 @@ export function activate(context: vscode.ExtensionContext): void {
   updateMuteStatus();
   muteStatus.show();
 
-  const account = createAccountService(context);
   const decisions = new PendingDecisionStore();
   const allowRules = new AllowRules();
   const telegramApiFor = () => createTelegramApi(config.read().telegram.botToken);
@@ -201,40 +194,11 @@ export function activate(context: vscode.ExtensionContext): void {
   });
   decisions.onChange(() => { if (twoWayEnabled() && decisions.pendingCount() > 0) poller.start(); });
 
-  const relayClient = createRelayClient({
-    fetchImpl: (url: string, init?: { method?: string; headers?: Record<string, string>; body?: string }) =>
-      fetch(url, init).then((r) => ({ status: r.status, json: () => r.json() })),
-    baseUrl: () => LICENSE_BASE_URL,
-    token: () => account.currentToken()
-  });
-  const managedBroker = createManagedBroker({
-    store: decisions,
-    relay: relayClient,
-    ttlMs: () => config.read().permissionTimeoutSec * 1000,
-    messageFor: (payload) => registry.detect(payload)?.message ?? "Permission needed",
-    showPcPrompt,
-    sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
-    pollMs: 2000,
-    log: (msg) => output.appendLine(msg)
-  });
-
   const permissionRoutes = {
     create: async (payload: unknown) => {
-      const mode = selectBroker({
-        isPro: account.state().pro,
-        linked: account.state().telegramLinked,
-        preferManaged: config.read().preferManagedBot,
-        diyConfigured: twoWayEnabled()
-      });
-      if (mode === "managed") {
-        return managedBroker.create(payload);
-      }
-      if (mode === "diy") {
-        const res = await permissionSystem.create(payload);
-        if (twoWayEnabled() && decisions.pendingCount() > 0) poller.start();
-        return res;
-      }
-      return { id: newId() }; // native: unknown id -> hook times out -> native prompt
+      const res = await permissionSystem.create(payload);
+      if (twoWayEnabled() && decisions.pendingCount() > 0) poller.start();
+      return res;
     },
     decision: (id: string) => permissionSystem.decision(id)
   };
@@ -260,12 +224,6 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.showWarningMessage(`AI Coding Alerts: no free port found near ${configuredPort}. Change aiCodingAlerts.port.`);
   };
   void startServer();
-
-  registerAccountCommands(context, account);
-  void account
-    .init()
-    .then(() => { void account.recheckIfNewDay(); }) // fire-and-forget; never blocks activation
-    .catch((e) => output.appendLine(`Account init skipped: ${String(e)}`));
 
   context.subscriptions.push(
     output,

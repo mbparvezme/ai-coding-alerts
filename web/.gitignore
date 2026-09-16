@@ -1,8 +1,0 @@
-node_modules/
-.next/
-.open-next/
-.wrangler/
-.dev.vars
-dist/
-next-env.d.ts
-*.tsbuildinfo
